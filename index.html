@@ -63,6 +63,9 @@
   }
   .hidden { display: none !important; }
 
+  /* pause overlays the live (frozen) game screen underneath, so it needs its own opaque backdrop */
+  #pause-screen { background: var(--canvas); z-index: 10; }
+
   h1.title {
     font-size: clamp(28px, 6vw, 44px);
     font-weight: 700;
@@ -216,12 +219,13 @@
   #score { font-size: 22px; font-weight: 700; color: var(--ink); }
   #combo { font-size: 12px; font-weight: 600; color: var(--accent-magenta); height: 14px; }
   #level-indicator { font-size: 13px; font-weight: 400; color: var(--ink); }
-  #pause-btn {
+  #hud-actions { display: flex; gap: 8px; }
+  #pause-btn, #exit-btn {
     background: var(--canvas); border: 1.5px solid var(--primary); color: var(--ink);
     border-radius: 9999px; padding: 5px 14px; font-size: 12px; font-weight: 500; cursor: pointer;
     font-family: inherit;
   }
-  #pause-btn:active { transform: scale(0.96); }
+  #pause-btn:active, #exit-btn:active { transform: scale(0.96); }
 
   /* ---------- Clue + timer ---------- */
   #clue-wrap {
@@ -369,7 +373,10 @@
         <div id="combo"></div>
       </div>
       <div id="level-indicator">단계 1</div>
-      <button id="pause-btn">일시정지</button>
+      <div id="hud-actions">
+        <button id="pause-btn">일시정지</button>
+        <button id="exit-btn">종료</button>
+      </div>
     </div>
     <div id="clue-wrap">
       <div id="clue">&nbsp;</div>
@@ -753,11 +760,21 @@ $("review-home-btn").addEventListener("click", () => {
 });
 $("pause-btn").addEventListener("click", togglePause);
 $("resume-btn").addEventListener("click", togglePause);
+$("exit-btn").addEventListener("click", exitGame);
 
 function togglePause() {
   state.paused = !state.paused;
   pauseScreen.classList.toggle("hidden", !state.paused);
   if (!state.paused) state.lastTs = null;
+}
+
+function exitGame() {
+  state.running = false;
+  state.paused = false;
+  if (state.rafId) cancelAnimationFrame(state.rafId);
+  pauseScreen.classList.add("hidden");
+  gameScreen.classList.add("hidden");
+  startScreen.classList.remove("hidden");
 }
 
 /* ============ 유틸 ============ */
