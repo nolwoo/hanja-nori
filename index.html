@@ -371,6 +371,9 @@
     <h1 class="title">한자 도장 콕!</h1>
     <p class="subtitle" id="subtitle">8급~4급 한자 · 위에 뜻과 음이 뜨면,<br>맞는 한자 도장을 찾아 콕 찍어보세요.</p>
     <button class="mode-btn hidden" id="install-btn" style="margin-bottom:18px;">📲 홈 화면에 추가</button>
+    <button class="mode-btn hidden" id="mistake-review-btn" style="margin-bottom:18px; background:var(--block-lilac);">
+      🔁 틀린 한자 복습 (<span id="mistake-count">0</span>개)
+    </button>
     <div class="rules">
       ✅ 정답을 맞추면 점수 획득! 연속으로 맞추면 콤보 보너스!<br>
       ⏰ 문제마다 제한시간이 있어요 (막대가 줄어요)<br>
@@ -783,12 +786,18 @@ $("start-btn").addEventListener("click", startGame);
 $("restart-btn").addEventListener("click", () => {
   gameoverScreen.classList.add("hidden");
   startScreen.classList.remove("hidden");
+  refreshMistakeMenu();
 });
 $("review-btn").addEventListener("click", startReview);
-$("review-again-btn").addEventListener("click", startReview);
+$("mistake-review-btn").addEventListener("click", startMistakeReview);
+$("review-again-btn").addEventListener("click", () => {
+  if (state.reviewSource === "persistent") startMistakeReview();
+  else startReview();
+});
 $("review-home-btn").addEventListener("click", () => {
   reviewDoneScreen.classList.add("hidden");
   startScreen.classList.remove("hidden");
+  refreshMistakeMenu();
 });
 $("pause-btn").addEventListener("click", togglePause);
 $("resume-btn").addEventListener("click", togglePause);
@@ -807,6 +816,7 @@ function exitGame() {
   pauseScreen.classList.add("hidden");
   gameScreen.classList.add("hidden");
   startScreen.classList.remove("hidden");
+  refreshMistakeMenu();
 }
 
 /* ============ 홈 화면에 추가 ============ */
@@ -936,6 +946,7 @@ function startGame() {
 /* ============ 틀린 문제 복습 ============ */
 function startReview() {
   state.reviewMode = true;
+  state.reviewSource = "session";
   state.reviewQueue = shuffle(state.missed.slice());
   state.reviewTotal = state.reviewQueue.length;
   state.combo = 0;
@@ -943,6 +954,38 @@ function startReview() {
   state.correctStreak = 0;
 
   gameoverScreen.classList.add("hidden");
+  reviewDoneScreen.classList.add("hidden");
+  gameScreen.classList.remove("hidden");
+  state.running = true;
+
+  updateHUD();
+  nextQuestion();
+  if (state.rafId) cancelAnimationFrame(state.rafId);
+  state.lastTs = null;
+  state.rafId = requestAnimationFrame(tick);
+}
+
+// 시작 화면의 "틀린 한자 복습" — localStorage에 누적된, 지금까지 틀린 적 있는 모든 한자를 복습
+function startMistakeReview() {
+  const entries = Object.values(loadMistakes());
+  if (entries.length === 0) {
+    reviewDoneScreen.classList.add("hidden");
+    gameoverScreen.classList.add("hidden");
+    startScreen.classList.remove("hidden");
+    refreshMistakeMenu();
+    return;
+  }
+
+  state.reviewMode = true;
+  state.reviewSource = "persistent";
+  state.pool = HANJA;
+  state.reviewQueue = shuffle(entries);
+  state.reviewTotal = state.reviewQueue.length;
+  state.combo = 0;
+  state.maxCombo = 0;
+  state.correctStreak = 0;
+
+  startScreen.classList.add("hidden");
   reviewDoneScreen.classList.add("hidden");
   gameScreen.classList.remove("hidden");
   state.running = true;
@@ -1077,6 +1120,8 @@ function onStampClick(stamp, ev) {
 }
 
 function handleCorrect(stamp, ev) {
+  if (state.reviewMode) removeMistake(state.answer[0]);
+
   state.combo++;
   state.maxCombo = Math.max(state.maxCombo, state.combo);
   state.score += 10 + state.combo * 2;
@@ -1096,7 +1141,36 @@ function handleCorrect(stamp, ev) {
   }, 260);
 }
 
+/* ============ 틀린 한자 영구 저장 (간격 반복용) ============ */
+const MISTAKE_KEY = "hanjaMistakes";
+
+function loadMistakes() {
+  try { return JSON.parse(localStorage.getItem(MISTAKE_KEY) || "{}"); } catch { return {}; }
+}
+
+function addMistake(entry) {
+  const store = loadMistakes();
+  store[entry[0]] = entry;
+  localStorage.setItem(MISTAKE_KEY, JSON.stringify(store));
+  refreshMistakeMenu();
+}
+
+function removeMistake(hanja) {
+  const store = loadMistakes();
+  if (!(hanja in store)) return;
+  delete store[hanja];
+  localStorage.setItem(MISTAKE_KEY, JSON.stringify(store));
+  refreshMistakeMenu();
+}
+
+function refreshMistakeMenu() {
+  const count = Object.keys(loadMistakes()).length;
+  $("mistake-count").textContent = count;
+  $("mistake-review-btn").classList.toggle("hidden", count === 0);
+}
+
 function trackMissed(entry) {
+  addMistake(entry);
   if (state.missed.some(e => e[0] === entry[0])) return;
   state.missed.push(entry);
 }
@@ -1186,6 +1260,33 @@ function tick(ts) {
     if (s.x > maxX) { s.x = maxX; s.vx = -Math.abs(s.vx); }
     if (s.y < 0) { s.y = 0; s.vy = Math.abs(s.vy); }
     if (s.y > maxY) { s.y = maxY; s.vy = -Math.abs(s.vy); }
+  });
+
+  // 도장끼리 겹치면 서로 튕겨냄
+  for (let i = 0; i < state.stamps.length; i++) {
+    for (let j = i + 1; j < state.stamps.length; j++) {
+      const a = state.stamps[i], b = state.stamps[j];
+      const overlapX = state.stampW - Math.abs(a.x - b.x);
+      const overlapY = state.stampH - Math.abs(a.y - b.y);
+      if (overlapX > 0 && overlapY > 0) {
+        if (overlapX < overlapY) {
+          const push = overlapX / 2;
+          if (a.x < b.x) { a.x -= push; b.x += push; } else { a.x += push; b.x -= push; }
+          const tmp = a.vx; a.vx = b.vx; b.vx = tmp;
+        } else {
+          const push = overlapY / 2;
+          if (a.y < b.y) { a.y -= push; b.y += push; } else { a.y += push; b.y -= push; }
+          const tmp = a.vy; a.vy = b.vy; b.vy = tmp;
+        }
+        a.x = Math.min(Math.max(a.x, 0), maxX);
+        b.x = Math.min(Math.max(b.x, 0), maxX);
+        a.y = Math.min(Math.max(a.y, 0), maxY);
+        b.y = Math.min(Math.max(b.y, 0), maxY);
+      }
+    }
+  }
+
+  state.stamps.forEach(s => {
     s.el.style.left = s.x + "px";
     s.el.style.top = s.y + "px";
   });
@@ -1318,6 +1419,8 @@ $("share-result-btn").addEventListener("click", async () => {
     btn.disabled = false;
   }
 });
+
+refreshMistakeMenu();
 </script>
 </body>
 </html>
