@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>한자 도장 콕! — 8급~4급</title>
+<style>
+  :root {
+    --paper: #f2e8d0;
+    --paper-dark: #e8dbb8;
+    --ink: #2a2420;
+    --ink-soft: #55483c;
+    --red: #b6312b;
+    --red-dark: #7d201c;
+    --gold: #b0842c;
+    --heart-red: #d1453a;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--paper);
+    background-image:
+      radial-gradient(ellipse at top left, rgba(255,255,255,0.25), transparent 60%),
+      radial-gradient(ellipse at bottom right, rgba(0,0,0,0.05), transparent 60%);
+    font-family: "Nanum Myeongjo", Batang, "Apple SD Gothic Neo", serif;
+    color: var(--ink);
+    overflow: hidden;
+    -webkit-user-select: none; user-select: none;
+  }
+  #app {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---------- Screens ---------- */
+  .screen {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 24px;
+    transition: opacity .25s ease;
+  }
+  .hidden { display: none !important; }
+
+  h1.title {
+    font-size: clamp(28px, 6vw, 44px);
+    margin: 0 0 6px;
+    letter-spacing: 2px;
+    color: var(--red-dark);
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.08);
+  }
+  .subtitle {
+    color: var(--ink-soft);
+    margin: 0 0 28px;
+    font-size: clamp(13px, 2.2vw, 16px);
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  .section-label {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin: 0 0 10px;
+    letter-spacing: 1px;
+  }
+
+  .mode-grid {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .mode-btn {
+    padding: 11px 22px;
+    border-radius: 22px;
+    border: 2px solid var(--red);
+    background: var(--paper-dark);
+    color: var(--red-dark);
+    font-size: 15px;
+    font-weight: bold;
+    font-family: inherit;
+    cursor: pointer;
+    transition: transform .12s ease, background .12s ease, color .12s ease;
+  }
+  .mode-btn:hover { transform: scale(1.05); }
+  .mode-btn.selected {
+    background: var(--red);
+    color: #fff5e6;
+    box-shadow: 0 0 0 3px rgba(182,49,43,0.25);
+  }
+
+  .grade-grid {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+  .grade-btn {
+    width: 68px; height: 44px;
+    border-radius: 22px;
+    border: 2px solid var(--red);
+    background: var(--paper-dark);
+    color: var(--red-dark);
+    font-size: 16px;
+    font-weight: bold;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .12s ease, background .12s ease, color .12s ease;
+  }
+  .grade-btn:hover { transform: scale(1.06); }
+  .grade-btn.selected {
+    background: var(--red);
+    color: #fff5e6;
+    box-shadow: 0 0 0 3px rgba(182,49,43,0.25);
+  }
+
+  .level-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 62px);
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .level-btn {
+    width: 62px; height: 62px;
+    border-radius: 50%;
+    border: 2px solid var(--red);
+    background: var(--paper-dark);
+    color: var(--red-dark);
+    font-size: 20px;
+    font-weight: bold;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .12s ease, background .12s ease, color .12s ease;
+  }
+  .level-btn:hover { transform: scale(1.08); }
+  .level-btn.selected {
+    background: var(--red);
+    color: #fff5e6;
+    box-shadow: 0 0 0 3px rgba(182,49,43,0.25);
+  }
+  .level-btn.lightning { font-size: 22px; }
+
+  .big-btn {
+    font-family: inherit;
+    font-size: 20px;
+    padding: 14px 44px;
+    border-radius: 40px;
+    border: none;
+    background: var(--red);
+    color: #fff6e8;
+    cursor: pointer;
+    box-shadow: 0 4px 0 var(--red-dark);
+    letter-spacing: 4px;
+    transition: transform .08s ease, box-shadow .08s ease;
+  }
+  .big-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--red-dark); }
+
+  .rules {
+    max-width: 480px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.8;
+    margin: 0 0 22px;
+    text-align: left;
+    background: rgba(255,255,255,0.35);
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 12px;
+    padding: 14px 18px;
+  }
+
+  /* ---------- HUD ---------- */
+  #hud {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 18px;
+    font-size: 15px;
+    z-index: 5;
+  }
+  #hearts span { font-size: 20px; margin-right: 2px; filter: grayscale(0); }
+  #hearts span.lost { filter: grayscale(1) opacity(0.35); }
+  #score-wrap { text-align: center; }
+  #score { font-size: 22px; font-weight: bold; color: var(--red-dark); }
+  #combo { font-size: 12px; color: var(--gold); height: 14px; }
+  #level-indicator { font-size: 13px; color: var(--ink-soft); }
+  #pause-btn {
+    background: none; border: 1px solid var(--ink-soft); color: var(--ink-soft);
+    border-radius: 8px; padding: 4px 10px; font-size: 12px; cursor: pointer;
+    font-family: inherit;
+  }
+
+  /* ---------- Clue + timer ---------- */
+  #clue-wrap {
+    text-align: center;
+    padding: 6px 0 10px;
+    z-index: 5;
+  }
+  #clue {
+    font-size: clamp(26px, 6vw, 40px);
+    font-weight: bold;
+    letter-spacing: 3px;
+    color: var(--ink);
+  }
+  #clue .sound { color: var(--red-dark); }
+  #clue.hanja-clue {
+    font-size: clamp(48px, 12vw, 72px);
+    letter-spacing: 0;
+  }
+  #timer-track {
+    width: 70%; max-width: 420px; height: 8px;
+    margin: 8px auto 0;
+    background: rgba(0,0,0,0.12);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  #timer-bar {
+    height: 100%; width: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--red));
+    border-radius: 6px;
+    transform-origin: left;
+  }
+
+  /* ---------- Play area ---------- */
+  #play-area {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.015) 0 2px, transparent 2px 40px),
+      repeating-linear-gradient(90deg, rgba(0,0,0,0.015) 0 2px, transparent 2px 40px);
+  }
+
+  .stamp {
+    position: absolute;
+    width: 78px; height: 78px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 30%, #c8433c, var(--red) 55%, var(--red-dark) 100%);
+    border: 3px solid var(--red-dark);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.25), inset 0 0 8px rgba(0,0,0,0.25);
+    display: flex; align-items: center; justify-content: center;
+    color: #fbead6;
+    font-size: 34px;
+    font-weight: bold;
+    cursor: pointer;
+    will-change: transform;
+    transition: filter .15s ease;
+  }
+  .stamp:hover { filter: brightness(1.08); }
+  .stamp.text-mode {
+    width: 148px; height: 68px;
+    border-radius: 16px;
+    font-size: 18px;
+    letter-spacing: 0.5px;
+    padding: 0 8px;
+    text-align: center;
+    line-height: 1.2;
+  }
+  .stamp.correct-pop {
+    animation: pop-stamp .45s ease forwards;
+    pointer-events: none;
+  }
+  .stamp.wrong-crack {
+    animation: crack-shake .4s ease forwards;
+    pointer-events: none;
+  }
+  @keyframes pop-stamp {
+    0%   { transform: scale(1) rotate(0deg); }
+    35%  { transform: scale(1.35) rotate(-8deg); filter: brightness(1.3); }
+    100% { transform: scale(0.2) rotate(6deg); opacity: 0; }
+  }
+  @keyframes crack-shake {
+    0%   { transform: translate(0,0) rotate(0deg); filter: grayscale(0); }
+    20%  { transform: translate(-4px,0) rotate(-4deg); }
+    40%  { transform: translate(4px,0) rotate(4deg); }
+    60%  { transform: translate(-3px,0) rotate(-3deg); }
+    100% { transform: translate(0,4px) rotate(0deg); filter: grayscale(0.8); opacity: 0; }
+  }
+
+  .ink-splat {
+    position: absolute;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--red-dark);
+    pointer-events: none;
+    animation: splat-fly .55s ease-out forwards;
+  }
+  @keyframes splat-fly {
+    to { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
+  }
+
+  .imprint {
+    position: absolute;
+    width: 78px; height: 78px;
+    border-radius: 50%;
+    border: 3px solid var(--red-dark);
+    opacity: 0.35;
+    pointer-events: none;
+    animation: imprint-fade 1s ease-out forwards;
+  }
+  @keyframes imprint-fade {
+    to { opacity: 0; transform: scale(1.15); }
+  }
+
+  .flash-red {
+    animation: flash-red-kf .35s ease;
+  }
+  @keyframes flash-red-kf {
+    0% { background: rgba(182,49,43,0.35); }
+    100% { background: transparent; }
+  }
+
+  #gameover-screen .stat { font-size: 16px; margin: 4px 0; color: var(--ink-soft); }
+  #gameover-screen .stat b { color: var(--red-dark); font-size: 20px; }
+
+  footer.hint {
+    position: absolute; bottom: 10px; left: 0; right: 0;
+    text-align: center; font-size: 11px; color: var(--ink-soft); opacity: 0.6;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- START SCREEN -->
+  <div id="start-screen" class="screen">
+    <h1 class="title">한자 도장 콕!</h1>
+    <p class="subtitle" id="subtitle">8급~4급 한자 · 위에 뜻과 음이 뜨면,<br>맞는 한자 도장을 찾아 콕 찍어보세요.</p>
+    <div class="rules">
+      ✅ 맞는 도장을 찍으면 점수 획득! 연속으로 맞히면 콤보 보너스<br>
+      ⏰ 문제마다 제한시간이 있어요 (막대가 줄어들어요)<br>
+      ❌ 틀린 도장을 찍거나 시간을 넘기면 하트가 줄어요 ❤️<br>
+      🔥 8문제마다 난이도가 한 단계씩 올라가요
+    </div>
+    <p class="section-label">모드 선택</p>
+    <div class="mode-grid" id="mode-grid"></div>
+    <p class="section-label">급수 선택</p>
+    <div class="grade-grid" id="grade-grid"></div>
+    <p class="section-label">시작 단계</p>
+    <div class="level-grid" id="level-grid"></div>
+    <button class="big-btn" id="start-btn">시작하기</button>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="game-screen" class="screen hidden" style="justify-content:flex-start; align-items:stretch; padding:0;">
+    <div id="hud">
+      <div id="hearts"></div>
+      <div id="score-wrap">
+        <div id="score">0</div>
+        <div id="combo"></div>
+      </div>
+      <div id="level-indicator">단계 1</div>
+      <button id="pause-btn">일시정지</button>
+    </div>
+    <div id="clue-wrap">
+      <div id="clue">&nbsp;</div>
+      <div id="timer-track"><div id="timer-bar"></div></div>
+    </div>
+    <div id="play-area"></div>
+  </div>
+
+  <!-- PAUSE OVERLAY -->
+  <div id="pause-screen" class="screen hidden">
+    <h1 class="title" style="font-size:32px;">일시정지</h1>
+    <button class="big-btn" id="resume-btn">계속하기</button>
+  </div>
+
+  <!-- GAME OVER SCREEN -->
+  <div id="gameover-screen" class="screen hidden">
+    <h1 class="title">게임 종료</h1>
+    <div class="stat">최종 점수 <b id="final-score">0</b></div>
+    <div class="stat">최고 콤보 <b id="final-combo">0</b></div>
+    <div class="stat">도달 단계 <b id="final-level">1</b></div>
+    <button class="big-btn" id="restart-btn" style="margin-top:20px;">다시하기</button>
+  </div>
+
+  <footer class="hint">로컬 개인용 · 한국어문회 8급~4급 배정한자 1,000자 기준</footer>
+</div>
+
+<script>
+/* ============ 6급 배정한자 300자 데이터 (8급~6급 누적, 한국어문회 공식 훈음 기준) ============ */
+const HANJA = [
+  // 8급 (50)
+  ["校","학교","교"],["敎","가르칠","교"],["九","아홉","구"],["國","나라","국"],["軍","군사","군"],
+  ["金","쇠","금"],["南","남녘","남"],["女","계집","녀"],["年","해","년"],["大","큰","대"],
+  ["東","동녘","동"],["六","여섯","륙"],["萬","일만","만"],["母","어미","모"],["木","나무","목"],
+  ["門","문","문"],["民","백성","민"],["白","흰","백"],["父","아비","부"],["北","북녘","북"],
+  ["四","넉","사"],["山","메","산"],["三","석","삼"],["生","날","생"],["西","서녘","서"],
+  ["先","먼저","선"],["小","작을","소"],["水","물","수"],["室","집","실"],["十","열","십"],
+  ["五","다섯","오"],["王","임금","왕"],["外","바깥","외"],["月","달","월"],["二","두","이"],
+  ["人","사람","인"],["一","한","일"],["日","날","일"],["長","긴","장"],["弟","아우","제"],
+  ["中","가운데","중"],["靑","푸를","청"],["寸","마디","촌"],["七","일곱","칠"],["土","흙","토"],
+  ["八","여덟","팔"],["學","배울","학"],["韓","한국","한"],["兄","형","형"],["火","불","화"],
+  // 준7급 = 7급Ⅱ (50)
+  ["家","집","가"],["間","사이","간"],["江","강","강"],["車","수레","거"],["工","장인","공"],
+  ["空","빌","공"],["氣","기운","기"],["記","기록할","기"],["男","사내","남"],["內","안","내"],
+  ["農","농사","농"],["答","대답","답"],["道","길","도"],["動","움직일","동"],["力","힘","력"],
+  ["立","설","립"],["每","매양","매"],["名","이름","명"],["物","물건","물"],["方","모","방"],
+  ["不","아닐","불"],["事","일","사"],["上","윗","상"],["姓","성","성"],["世","인간","세"],
+  ["手","손","수"],["時","때","시"],["市","저자","시"],["食","밥","식"],["安","편안","안"],
+  ["午","낮","오"],["右","오른","우"],["子","아들","자"],["自","스스로","자"],["場","마당","장"],
+  ["電","번개","전"],["前","앞","전"],["全","온전","전"],["正","바를","정"],["足","발","족"],
+  ["左","왼","좌"],["直","곧을","직"],["平","평평할","평"],["下","아래","하"],["漢","한수","한"],
+  ["海","바다","해"],["話","말씀","화"],["活","살","활"],["孝","효도","효"],["後","뒤","후"],
+  // 7급 (50)
+  ["歌","노래","가"],["口","입","구"],["旗","기","기"],["同","한가지","동"],["洞","골","동"],
+  ["冬","겨울","동"],["登","오를","등"],["來","올","래"],["老","늙을","로"],["里","마을","리"],
+  ["林","수풀","림"],["面","낯","면"],["命","목숨","명"],["文","글월","문"],["問","물을","문"],
+  ["百","일백","백"],["夫","지아비","부"],["算","셈","산"],["色","빛","색"],["夕","저녁","석"],
+  ["少","적을","소"],["所","바","소"],["數","셈","수"],["植","심을","식"],["心","마음","심"],
+  ["語","말씀","어"],["然","그럴","연"],["有","있을","유"],["育","기를","육"],["邑","고을","읍"],
+  ["入","들","입"],["字","글자","자"],["祖","할아비","조"],["住","살","주"],["主","임금","주"],
+  ["重","무거울","중"],["紙","종이","지"],["地","땅","지"],["千","일천","천"],["天","하늘","천"],
+  ["川","내","천"],["草","풀","초"],["村","마을","촌"],["秋","가을","추"],["春","봄","춘"],
+  ["出","날","출"],["便","편할","편"],["夏","여름","하"],["花","꽃","화"],["休","쉴","휴"],
+  // 준6급 = 6급Ⅱ (75)
+  ["各","각각","각"],["角","뿔","각"],["界","지경","계"],["計","셀","계"],["高","높을","고"],
+  ["公","공평할","공"],["共","한가지","공"],["功","공","공"],["果","열매","과"],["科","과목","과"],
+  ["光","빛","광"],["球","공","구"],["今","이제","금"],["急","급할","급"],["短","짧을","단"],
+  ["堂","집","당"],["代","대신할","대"],["對","대할","대"],["圖","그림","도"],["讀","읽을","독"],
+  ["童","아이","동"],["等","무리","등"],["樂","즐길","락"],["利","이할","리"],["理","다스릴","리"],
+  ["明","밝을","명"],["聞","들을","문"],["半","반","반"],["反","돌이킬","반"],["班","나눌","반"],
+  ["發","필","발"],["放","놓을","방"],["部","떼","부"],["分","나눌","분"],["社","모일","사"],
+  ["書","글","서"],["線","줄","선"],["雪","눈","설"],["成","이룰","성"],["省","살필","성"],
+  ["消","사라질","소"],["術","재주","술"],["始","비로소","시"],["身","몸","신"],["神","귀신","신"],
+  ["信","믿을","신"],["新","새","신"],["弱","약할","약"],["藥","약","약"],["業","업","업"],
+  ["勇","날랠","용"],["用","쓸","용"],["運","옮길","운"],["音","소리","음"],["飮","마실","음"],
+  ["意","뜻","의"],["作","지을","작"],["昨","어제","작"],["才","재주","재"],["戰","싸움","전"],
+  ["庭","뜰","정"],["第","차례","제"],["題","제목","제"],["注","부을","주"],["集","모을","집"],
+  ["窓","창","창"],["淸","맑을","청"],["體","몸","체"],["表","겉","표"],["風","바람","풍"],
+  ["幸","다행","행"],["現","나타날","현"],["形","모양","형"],["和","화할","화"],["會","모일","회"],
+  // 6급 (75)
+  ["感","느낄","감"],["強","강할","강"],["開","열","개"],["京","서울","경"],["古","옛","고"],
+  ["苦","쓸","고"],["交","사귈","교"],["區","구분할","구"],["郡","고을","군"],["根","뿌리","근"],
+  ["近","가까울","근"],["級","등급","급"],["多","많을","다"],["待","기다릴","대"],["度","법도","도"],
+  ["頭","머리","두"],["例","법식","례"],["禮","예도","례"],["路","길","로"],["綠","푸를","록"],
+  ["李","오얏","리"],["目","눈","목"],["美","아름다울","미"],["米","쌀","미"],["朴","성","박"],
+  ["番","차례","번"],["別","다를","별"],["病","병","병"],["服","옷","복"],["本","근본","본"],
+  ["使","하여금","사"],["死","죽을","사"],["席","자리","석"],["石","돌","석"],["速","빠를","속"],
+  ["孫","손자","손"],["樹","나무","수"],["習","익힐","습"],["勝","이길","승"],["式","법","식"],
+  ["失","잃을","실"],["愛","사랑","애"],["夜","밤","야"],["野","들","야"],["陽","볕","양"],
+  ["洋","큰바다","양"],["言","말씀","언"],["英","꽃부리","영"],["永","길","영"],["溫","따뜻할","온"],
+  ["園","동산","원"],["遠","멀","원"],["由","말미암을","유"],["油","기름","유"],["銀","은","은"],
+  ["醫","의원","의"],["衣","옷","의"],["者","놈","자"],["章","글","장"],["在","있을","재"],
+  ["定","정할","정"],["朝","아침","조"],["族","겨레","족"],["晝","낮","주"],["親","친할","친"],
+  ["太","클","태"],["通","통할","통"],["特","특별할","특"],["合","합할","합"],["行","다닐","행"],
+  ["向","향할","향"],["號","이름","호"],["畫","그림","화"],["黃","누를","황"],["訓","가르칠","훈"],
+  // 준5급 = 5급Ⅱ (100)
+  ["價","값","가"],["客","손","객"],["格","격식","격"],["見","볼","견"],["結","맺을","결"],
+  ["決","결단할","결"],["敬","공경","경"],["告","고할","고"],["課","공부할","과"],["過","지날","과"],
+  ["觀","볼","관"],["關","관계할","관"],["廣","넓을","광"],["具","갖출","구"],["舊","옛","구"],
+  ["局","판","국"],["基","터","기"],["己","몸","기"],["念","생각","념"],["能","능할","능"],
+  ["團","둥글","단"],["當","마땅","당"],["德","큰","덕"],["到","이를","도"],["獨","홀로","독"],
+  ["朗","밝을","랑"],["良","어질","량"],["旅","나그네","려"],["歷","지날","력"],["練","익힐","련"],
+  ["勞","일할","로"],["流","흐를","류"],["類","무리","류"],["陸","뭍","륙"],["望","바랄","망"],
+  ["法","법","법"],["變","변할","변"],["兵","병사","병"],["福","복","복"],["奉","받들","봉"],
+  ["史","사기","사"],["士","선비","사"],["仕","섬길","사"],["産","낳을","산"],["商","장사","상"],
+  ["相","서로","상"],["鮮","고울","선"],["仙","신선","선"],["說","말씀","설"],["性","성품","성"],
+  ["洗","씻을","세"],["歲","해","세"],["束","묶을","속"],["首","머리","수"],["宿","잘","숙"],
+  ["順","순할","순"],["識","알","식"],["臣","신하","신"],["實","열매","실"],["兒","아이","아"],
+  ["惡","악할","악"],["約","맺을","약"],["養","기를","양"],["要","요긴할","요"],["友","벗","우"],
+  ["雨","비","우"],["雲","구름","운"],["元","으뜸","원"],["偉","클","위"],["以","써","이"],
+  ["任","맡길","임"],["財","재물","재"],["材","재목","재"],["的","과녁","적"],["傳","전할","전"],
+  ["典","법","전"],["展","펼","전"],["節","마디","절"],["切","끊을","절"],["店","가게","점"],
+  ["情","뜻","정"],["調","고를","조"],["卒","마칠","졸"],["種","씨","종"],["週","주일","주"],
+  ["州","고을","주"],["知","알","지"],["質","바탕","질"],["着","붙을","착"],["參","참여할","참"],
+  ["責","꾸짖을","책"],["充","채울","충"],["宅","집","택"],["品","물건","품"],["必","반드시","필"],
+  ["筆","붓","필"],["害","해할","해"],["化","될","화"],["效","본받을","효"],["凶","흉할","흉"],
+  // 5급 (100)
+  ["加","더할","가"],["可","옳을","가"],["改","고칠","개"],["擧","들","거"],["去","갈","거"],
+  ["件","물건","건"],["建","세울","건"],["健","굳셀","건"],["輕","가벼울","경"],["競","다툴","경"],
+  ["景","볕","경"],["考","생각할","고"],["固","굳을","고"],["曲","굽을","곡"],["橋","다리","교"],
+  ["救","구원할","구"],["貴","귀할","귀"],["規","법","규"],["給","줄","급"],["汽","물끓는김","기"],
+  ["期","기약할","기"],["技","재주","기"],["吉","길할","길"],["壇","단","단"],["談","말씀","담"],
+  ["都","도읍","도"],["島","섬","도"],["落","떨어질","락"],["冷","찰","랭"],["量","헤아릴","량"],
+  ["領","거느릴","령"],["令","하여금","령"],["料","헤아릴","료"],["馬","말","마"],["末","끝","말"],
+  ["亡","망할","망"],["買","살","매"],["賣","팔","매"],["無","없을","무"],["倍","곱","배"],
+  ["比","견줄","비"],["費","쓸","비"],["鼻","코","비"],["氷","얼음","빙"],["寫","베낄","사"],
+  ["思","생각","사"],["査","조사할","사"],["賞","상줄","상"],["序","차례","서"],["善","착할","선"],
+  ["選","가릴","선"],["船","배","선"],["示","보일","시"],["案","책상","안"],["漁","고기잡을","어"],
+  ["魚","고기","어"],["億","억","억"],["熱","더울","열"],["葉","잎","엽"],["屋","집","옥"],
+  ["完","완전할","완"],["曜","빛날","요"],["浴","목욕할","욕"],["牛","소","우"],["雄","수컷","웅"],
+  ["原","언덕","원"],["院","집","원"],["願","원할","원"],["位","자리","위"],["耳","귀","이"],
+  ["因","인할","인"],["災","재앙","재"],["再","두","재"],["爭","다툴","쟁"],["貯","쌓을","저"],
+  ["赤","붉을","적"],["停","머물","정"],["操","잡을","조"],["終","마칠","종"],["罪","허물","죄"],
+  ["止","그칠","지"],["唱","부를","창"],["鐵","쇠","철"],["初","처음","초"],["最","가장","최"],
+  ["祝","빌","축"],["致","이를","치"],["則","법칙","칙"],["他","다를","타"],["打","칠","타"],
+  ["卓","높을","탁"],["炭","숯","탄"],["板","널","판"],["敗","패할","패"],["河","물","하"],
+  ["寒","찰","한"],["許","허락할","허"],["湖","호수","호"],["患","근심","환"],["黑","검을","흑"],
+  // 준4급 = 4급Ⅱ (250)
+  ["假","거짓","가"],["街","거리","가"],["減","덜","감"],["監","볼","감"],["講","욀","강"],
+  ["康","편안","강"],["個","낱","개"],["檢","검사할","검"],["潔","깨끗할","결"],["缺","이지러질","결"],
+  ["境","지경","경"],["經","지날","경"],["警","깨우칠","경"],["慶","경사","경"],["係","맬","계"],
+  ["故","연고","고"],["官","벼슬","관"],["求","구할","구"],["句","글귀","구"],["究","연구할","구"],
+  ["宮","집","궁"],["權","권세","권"],["極","다할","극"],["禁","금할","금"],["器","그릇","기"],
+  ["起","일어날","기"],["暖","따뜻할","난"],["難","어려울","난"],["怒","성낼","노"],["努","힘쓸","노"],
+  ["斷","끊을","단"],["單","홑","단"],["檀","박달나무","단"],["端","끝","단"],["達","통달할","달"],
+  ["擔","멜","담"],["黨","무리","당"],["帶","띠","대"],["隊","무리","대"],["導","인도할","도"],
+  ["毒","독","독"],["督","감독할","독"],["銅","구리","동"],["斗","말","두"],["豆","콩","두"],
+  ["得","얻을","득"],["燈","등","등"],["羅","벌릴","라"],["兩","두","량"],["麗","고울","려"],
+  ["連","이을","련"],["列","벌릴","렬"],["錄","기록할","록"],["論","논할","론"],["留","머무를","류"],
+  ["律","법칙","률"],["滿","찰","만"],["脈","줄기","맥"],["毛","터럭","모"],["牧","칠","목"],
+  ["務","힘쓸","무"],["武","호반","무"],["未","아닐","미"],["味","맛","미"],["密","빽빽할","밀"],
+  ["博","넓을","박"],["防","막을","방"],["房","방","방"],["訪","찾을","방"],["拜","절","배"],
+  ["背","등","배"],["配","나눌","배"],["罰","벌할","벌"],["伐","칠","벌"],["壁","벽","벽"],
+  ["邊","가","변"],["保","지킬","보"],["步","걸음","보"],["報","갚을","보"],["寶","보배","보"],
+  ["復","회복할","복"],["府","마을","부"],["富","부자","부"],["副","버금","부"],["婦","며느리","부"],
+  ["佛","부처","불"],["飛","날","비"],["備","갖출","비"],["非","아닐","비"],["悲","슬플","비"],
+  ["貧","가난할","빈"],["寺","절","사"],["師","스승","사"],["謝","사례할","사"],["舍","집","사"],
+  ["殺","죽일","살"],["常","떳떳할","상"],["床","상","상"],["想","생각","상"],["狀","형상","상"],
+  ["設","베풀","설"],["誠","정성","성"],["聲","소리","성"],["盛","성할","성"],["聖","성인","성"],
+  ["城","재","성"],["星","별","성"],["勢","형세","세"],["稅","세금","세"],["細","가늘","세"],
+  ["笑","웃음","소"],["掃","쓸","소"],["素","본디","소"],["續","이을","속"],["俗","풍속","속"],
+  ["送","보낼","송"],["修","닦을","수"],["受","받을","수"],["守","지킬","수"],["授","줄","수"],
+  ["收","거둘","수"],["純","순수할","순"],["承","이을","승"],["詩","시","시"],["試","시험","시"],
+  ["視","볼","시"],["施","베풀","시"],["是","이","시"],["息","쉴","식"],["申","납","신"],
+  ["深","깊을","심"],["眼","눈","안"],["暗","어두울","암"],["壓","누를","압"],["液","진","액"],
+  ["羊","양","양"],["餘","남을","여"],["如","같을","여"],["逆","거스릴","역"],["煙","연기","연"],
+  ["硏","갈","연"],["演","펼","연"],["榮","영화","영"],["藝","재주","예"],["誤","그르칠","오"],
+  ["玉","구슬","옥"],["往","갈","왕"],["謠","노래","요"],["容","얼굴","용"],["圓","둥글","원"],
+  ["員","인원","원"],["衛","지킬","위"],["爲","하","위"],["肉","고기","육"],["恩","은혜","은"],
+  ["陰","그늘","음"],["應","응할","응"],["議","의논할","의"],["義","옳을","의"],["移","옮길","이"],
+  ["益","더할","익"],["印","도장","인"],["引","끌","인"],["認","알","인"],["將","장수","장"],
+  ["障","막을","장"],["低","낮을","저"],["敵","대적할","적"],["田","밭","전"],["絶","끊을","절"],
+  ["接","이을","접"],["政","정사","정"],["程","한도","정"],["精","정할","정"],["濟","건널","제"],
+  ["提","끌","제"],["制","절제할","제"],["製","지을","제"],["除","덜","제"],["際","즈음","제"],
+  ["祭","제사","제"],["鳥","새","조"],["助","도울","조"],["早","이를","조"],["造","지을","조"],
+  ["尊","높을","존"],["宗","마루","종"],["走","달릴","주"],["竹","대","죽"],["準","준할","준"],
+  ["衆","무리","중"],["增","더할","증"],["志","뜻","지"],["指","가리킬","지"],["支","지탱할","지"],
+  ["至","이를","지"],["職","직분","직"],["進","나아갈","진"],["眞","참","진"],["次","버금","차"],
+  ["察","살필","찰"],["創","비롯할","창"],["處","곳","처"],["請","청할","청"],["總","다","총"],
+  ["銃","총","총"],["築","쌓을","축"],["蓄","모을","축"],["忠","충성","충"],["蟲","벌레","충"],
+  ["取","가질","취"],["測","헤아릴","측"],["治","다스릴","치"],["置","둘","치"],["齒","이","치"],
+  ["侵","침노할","침"],["快","쾌할","쾌"],["態","모습","태"],["統","거느릴","통"],["退","물러날","퇴"],
+  ["波","물결","파"],["破","깨뜨릴","파"],["砲","대포","포"],["包","쌀","포"],["布","베","포"],
+  ["暴","사나울","폭"],["票","표","표"],["豊","풍년","풍"],["限","한할","한"],["航","배","항"],
+  ["港","항구","항"],["解","풀","해"],["鄕","시골","향"],["香","향기","향"],["虛","빌","허"],
+  ["驗","시험","험"],["賢","어질","현"],["血","피","혈"],["協","화할","협"],["惠","은혜","혜"],
+  ["好","좋을","호"],["戶","집","호"],["護","도울","호"],["呼","부를","호"],["貨","재물","화"],
+  ["確","굳을","확"],["回","돌아올","회"],["吸","마실","흡"],["興","일","흥"],["希","바랄","희"],
+  // 4급 (250)
+  ["暇","틈","가"],["刻","새길","각"],["覺","깨달을","각"],["簡","대쪽","간"],["看","볼","간"],
+  ["干","방패","간"],["甘","달","감"],["敢","감히","감"],["甲","갑옷","갑"],["降","내릴","강"],
+  ["拒","막을","거"],["居","살","거"],["據","근거","거"],["巨","클","거"],["傑","뛰어날","걸"],
+  ["儉","검소할","검"],["擊","칠","격"],["激","격할","격"],["堅","굳을","견"],["犬","개","견"],
+  ["驚","놀랄","경"],["更","고칠","경"],["傾","기울","경"],["鏡","거울","경"],["階","섬돌","계"],
+  ["鷄","닭","계"],["季","계절","계"],["系","이어맬","계"],["繼","이을","계"],["戒","경계할","계"],
+  ["孤","외로울","고"],["庫","곳집","고"],["穀","곡식","곡"],["困","곤할","곤"],["骨","뼈","골"],
+  ["孔","구멍","공"],["攻","칠","공"],["管","대롱","관"],["鑛","쇳돌","광"],["構","얽을","구"],
+  ["君","임금","군"],["群","무리","군"],["屈","굽힐","굴"],["窮","다할","궁"],["券","문서","권"],
+  ["勸","권할","권"],["卷","책","권"],["歸","돌아갈","귀"],["均","고를","균"],["劇","심할","극"],
+  ["勤","부지런할","근"],["筋","힘줄","근"],["機","틀","기"],["寄","부칠","기"],["奇","기특할","기"],
+  ["紀","벼리","기"],["納","들일","납"],["段","층계","단"],["徒","무리","도"],["盜","도둑","도"],
+  ["逃","도망할","도"],["亂","어지러울","란"],["卵","알","란"],["覽","볼","람"],["略","간략할","략"],
+  ["糧","양식","량"],["慮","생각할","려"],["烈","매울","렬"],["龍","용","룡"],["柳","버들","류"],
+  ["輪","바퀴","륜"],["離","떠날","리"],["妹","누이","매"],["勉","힘쓸","면"],["鳴","울","명"],
+  ["模","본뜰","모"],["墓","무덤","묘"],["妙","묘할","묘"],["舞","춤출","무"],["拍","칠","박"],
+  ["髮","터럭","발"],["妨","방해할","방"],["犯","범할","범"],["範","법","범"],["辯","말씀","변"],
+  ["普","넓을","보"],["伏","엎드릴","복"],["複","겹칠","복"],["否","아닐","부"],["負","질","부"],
+  ["粉","가루","분"],["憤","분할","분"],["批","비평할","비"],["祕","숨길","비"],["碑","비석","비"],
+  ["辭","말씀","사"],["私","사사","사"],["絲","실","사"],["射","쏠","사"],["散","흩을","산"],
+  ["傷","다칠","상"],["象","코끼리","상"],["宣","베풀","선"],["舌","혀","설"],["屬","붙일","속"],
+  ["損","덜","손"],["頌","기릴","송"],["松","소나무","송"],["秀","빼어날","수"],["叔","아재비","숙"],
+  ["肅","엄숙할","숙"],["崇","높을","숭"],["氏","각시","씨"],["額","이마","액"],["樣","모양","양"],
+  ["嚴","엄할","엄"],["與","더불","여"],["域","지경","역"],["易","바꿀","역"],["燃","탈","연"],
+  ["鉛","납","연"],["緣","인연","연"],["延","늘일","연"],["迎","맞을","영"],["映","비칠","영"],
+  ["營","경영할","영"],["豫","미리","예"],["優","넉넉할","우"],["遇","만날","우"],["郵","우편","우"],
+  ["怨","원망할","원"],["援","도울","원"],["源","근원","원"],["圍","에워쌀","위"],["委","맡길","위"],
+  ["威","위엄","위"],["慰","위로할","위"],["危","위태할","위"],["遊","놀","유"],["乳","젖","유"],
+  ["儒","선비","유"],["遺","남길","유"],["隱","숨을","은"],["依","의지할","의"],["儀","거동","의"],
+  ["疑","의심할","의"],["異","다를","이"],["仁","어질","인"],["資","재물","자"],["姿","모양","자"],
+  ["姉","손윗누이","자"],["殘","남을","잔"],["雜","섞일","잡"],["獎","장려할","장"],["裝","꾸밀","장"],
+  ["腸","창자","장"],["張","베풀","장"],["壯","장할","장"],["帳","장막","장"],["底","밑","저"],
+  ["積","쌓을","적"],["籍","문서","적"],["適","맞을","적"],["績","길쌈","적"],["賊","도둑","적"],
+  ["專","오로지","전"],["轉","구를","전"],["錢","돈","전"],["折","꺾을","절"],["點","점","점"],
+  ["占","점령할","점"],["靜","고요할","정"],["丁","고무래","정"],["整","가지런할","정"],["帝","임금","제"],
+  ["條","가지","조"],["潮","밀물","조"],["組","짤","조"],["存","있을","존"],["鍾","쇠북","종"],
+  ["從","좇을","종"],["座","자리","좌"],["酒","술","주"],["朱","붉을","주"],["周","두루","주"],
+  ["證","증거","증"],["持","가질","지"],["智","슬기","지"],["誌","기록할","지"],["織","짤","직"],
+  ["珍","보배","진"],["盡","다할","진"],["陣","진칠","진"],["差","다를","차"],["讚","기릴","찬"],
+  ["採","캘","채"],["冊","책","책"],["泉","샘","천"],["聽","들을","청"],["廳","관청","청"],
+  ["招","부를","초"],["推","밀","추"],["縮","줄일","축"],["就","나아갈","취"],["趣","뜻","취"],
+  ["層","층","층"],["寢","잘","침"],["針","바늘","침"],["稱","일컬을","칭"],["歎","탄식할","탄"],
+  ["彈","탄알","탄"],["脫","벗을","탈"],["探","찾을","탐"],["擇","가릴","택"],["討","칠","토"],
+  ["痛","아플","통"],["投","던질","투"],["鬪","싸움","투"],["派","갈래","파"],["判","판단할","판"],
+  ["篇","책","편"],["評","평할","평"],["閉","닫을","폐"],["胞","세포","포"],["爆","불터질","폭"],
+  ["標","표할","표"],["疲","피곤할","피"],["避","피할","피"],["閑","한가할","한"],["恨","한","한"],
+  ["抗","겨룰","항"],["核","씨","핵"],["憲","법","헌"],["險","험할","험"],["革","가죽","혁"],
+  ["顯","나타날","현"],["刑","형벌","형"],["或","혹","혹"],["婚","혼인할","혼"],["混","섞을","혼"],
+  ["紅","붉을","홍"],["華","빛날","화"],["歡","기쁠","환"],["環","고리","환"],["況","상황","황"],
+  ["灰","재","회"],["厚","두터울","후"],["候","기후","후"],["揮","휘두를","휘"],["喜","기쁠","희"]
+];
+
+const STAMP_SIZE = 84; // .stamp box size incl. border (hanja mode, square)
+const TEXT_STAMP_W = 148; // .stamp.text-mode box size incl. border (word mode, pill)
+const TEXT_STAMP_H = 68;
+
+const MODES = {
+  word2hanja: { label: "뜻/음 → 한자", subtitle: "위에 뜻과 음이 뜨면,<br>맞는 한자 도장을 찾아 콕 찍어보세요." },
+  hanja2word: { label: "한자 → 뜻/음", subtitle: "위에 한자가 뜨면,<br>맞는 뜻과 음 도장을 찾아 콕 찍어보세요." },
+};
+
+// HANJA is ordered cumulatively: 8급(0-49), 7급Ⅱ+7급(50-149), 6급Ⅱ+6급(150-299),
+// 5급Ⅱ+5급(300-499), 4급Ⅱ+4급(500-999).
+// Selecting a grade practices that grade plus everything below it, matching the real exam.
+const GRADE_BOUNDARIES = { "8": 50, "7": 150, "6": 300, "5": 500, "4": 1000 };
+
+/* ============ 난이도 테이블 (1~12단계) ============ */
+const LEVELS = [
+  null,
+  {choices:3, time:9.0, speed:[12,18]},
+  {choices:4, time:8.5, speed:[14,20]},
+  {choices:4, time:8.0, speed:[16,22]},
+  {choices:5, time:7.5, speed:[18,25]},
+  {choices:5, time:7.0, speed:[20,28]},
+  {choices:6, time:6.5, speed:[22,30]},
+  {choices:6, time:6.0, speed:[24,33]},
+  {choices:7, time:5.5, speed:[26,36]},
+  {choices:7, time:5.0, speed:[28,40]},
+  {choices:8, time:4.5, speed:[32,44]},
+  {choices:8, time:4.0, speed:[36,48]},
+  {choices:9, time:3.5, speed:[40,55]},
+];
+
+/* ============ 상태 ============ */
+let state = {
+  startMode: "word2hanja",
+  mode: "word2hanja",
+  startGrade: "6",
+  pool: null,
+  startLevel: 1,
+  level: 1,
+  score: 0,
+  combo: 0,
+  maxCombo: 0,
+  hearts: 3,
+  correctStreak: 0,
+  answer: null,
+  stamps: [],
+  stampW: STAMP_SIZE,
+  stampH: STAMP_SIZE,
+  paused: false,
+  running: false,
+  qTotalTime: 0,
+  qElapsed: 0,
+  rafId: null,
+  lastTs: null,
+};
+
+/* ============ DOM refs ============ */
+const $ = (id) => document.getElementById(id);
+const startScreen = $("start-screen");
+const gameScreen = $("game-screen");
+const pauseScreen = $("pause-screen");
+const gameoverScreen = $("gameover-screen");
+const modeGrid = $("mode-grid");
+const subtitleEl = $("subtitle");
+const gradeGrid = $("grade-grid");
+const levelGrid = $("level-grid");
+const playArea = $("play-area");
+const clueEl = $("clue");
+const timerBar = $("timer-bar");
+const scoreEl = $("score");
+const comboEl = $("combo");
+const heartsEl = $("hearts");
+const levelIndicator = $("level-indicator");
+
+/* ============ 시작화면: 모드 선택 ============ */
+Object.keys(MODES).forEach(modeKey => {
+  const b = document.createElement("button");
+  b.className = "mode-btn" + (modeKey === state.startMode ? " selected" : "");
+  b.textContent = MODES[modeKey].label;
+  b.addEventListener("click", () => {
+    document.querySelectorAll(".mode-btn").forEach(el => el.classList.remove("selected"));
+    b.classList.add("selected");
+    state.startMode = modeKey;
+    subtitleEl.innerHTML = `8급~4급 한자 · ${MODES[modeKey].subtitle}`;
+  });
+  modeGrid.appendChild(b);
+});
+
+/* ============ 시작화면: 급수 선택 ============ */
+["8", "7", "6", "5", "4"].forEach(g => {
+  const b = document.createElement("button");
+  b.className = "grade-btn" + (g === state.startGrade ? " selected" : "");
+  b.textContent = g + "급";
+  b.addEventListener("click", () => {
+    document.querySelectorAll(".grade-btn").forEach(el => el.classList.remove("selected"));
+    b.classList.add("selected");
+    state.startGrade = g;
+  });
+  gradeGrid.appendChild(b);
+});
+
+/* ============ 시작화면: 레벨 선택 ============ */
+for (let i = 1; i <= 12; i++) {
+  const b = document.createElement("button");
+  b.className = "level-btn" + (i === 1 ? " selected" : "") + (i === 12 ? " lightning" : "");
+  b.textContent = i === 12 ? "⚡" : i;
+  b.dataset.level = i;
+  b.addEventListener("click", () => {
+    document.querySelectorAll(".level-btn").forEach(el => el.classList.remove("selected"));
+    b.classList.add("selected");
+    state.startLevel = i;
+  });
+  levelGrid.appendChild(b);
+}
+
+$("start-btn").addEventListener("click", startGame);
+$("restart-btn").addEventListener("click", () => {
+  gameoverScreen.classList.add("hidden");
+  startScreen.classList.remove("hidden");
+});
+$("pause-btn").addEventListener("click", togglePause);
+$("resume-btn").addEventListener("click", togglePause);
+
+function togglePause() {
+  state.paused = !state.paused;
+  pauseScreen.classList.toggle("hidden", !state.paused);
+  if (!state.paused) state.lastTs = null;
+}
+
+/* ============ 유틸 ============ */
+function rand(min, max) { return Math.random() * (max - min) + min; }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function pickQuestion() {
+  const answer = pick(state.pool);
+  const cfg = LEVELS[state.level];
+  const answerText = answer[1] + " " + answer[2];
+  // exclude same hanja AND synonym characters sharing the same 뜻/음 text (e.g. 現/顯 both "나타날 현")
+  const rest = state.pool.filter(h => h[0] !== answer[0] && (h[1] + " " + h[2]) !== answerText);
+  const distractors = [];
+  const usedIdx = new Set();
+  const usedTexts = new Set([answerText]);
+  let attempts = 0;
+  while (distractors.length < cfg.choices - 1 && distractors.length < rest.length && attempts < rest.length * 5) {
+    attempts++;
+    const idx = Math.floor(Math.random() * rest.length);
+    if (usedIdx.has(idx)) continue;
+    const candidate = rest[idx];
+    const text = candidate[1] + " " + candidate[2];
+    if (usedTexts.has(text)) continue; // avoid two distractors sharing the same 뜻/음 text
+    usedIdx.add(idx);
+    usedTexts.add(text);
+    distractors.push(candidate);
+  }
+  const all = [answer, ...distractors];
+  for (let i = all.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [all[i], all[j]] = [all[j], all[i]];
+  }
+  return { answer, all, cfg };
+}
+
+/* ============ 게임 시작 ============ */
+function startGame() {
+  state.mode = state.startMode;
+  state.grade = state.startGrade;
+  state.pool = HANJA.slice(0, GRADE_BOUNDARIES[state.grade]);
+  state.level = state.startLevel;
+  state.score = 0;
+  state.combo = 0;
+  state.maxCombo = 0;
+  state.hearts = 3;
+  state.correctStreak = 0;
+
+  startScreen.classList.add("hidden");
+  gameoverScreen.classList.add("hidden");
+  gameScreen.classList.remove("hidden");
+  state.running = true;
+
+  updateHUD();
+  nextQuestion();
+  if (state.rafId) cancelAnimationFrame(state.rafId);
+  state.lastTs = null;
+  state.rafId = requestAnimationFrame(tick);
+}
+
+function updateHUD() {
+  scoreEl.textContent = state.score;
+  comboEl.textContent = state.combo >= 2 ? `🔥 ${state.combo} 콤보` : "";
+  const levelLabel = state.level === 12 ? "⚡ 번개" : state.level;
+  levelIndicator.textContent = `${state.grade}급 · 단계 ${levelLabel}`;
+  heartsEl.innerHTML = "";
+  for (let i = 0; i < 3; i++) {
+    const s = document.createElement("span");
+    s.textContent = "❤️";
+    if (i >= state.hearts) s.classList.add("lost");
+    heartsEl.appendChild(s);
+  }
+}
+
+/* ============ 문제 출제 ============ */
+function nextQuestion() {
+  playArea.innerHTML = "";
+  state.stamps = [];
+
+  const { answer, all, cfg } = pickQuestion();
+  state.answer = answer;
+  state.qTotalTime = cfg.time;
+  state.qElapsed = 0;
+
+  const isReverse = state.mode === "hanja2word";
+  clueEl.classList.toggle("hanja-clue", isReverse);
+  if (isReverse) {
+    clueEl.textContent = answer[0];
+  } else {
+    clueEl.innerHTML = `${answer[1]} <span class="sound">${answer[2]}</span>`;
+  }
+
+  state.stampW = isReverse ? TEXT_STAMP_W : STAMP_SIZE;
+  state.stampH = isReverse ? TEXT_STAMP_H : STAMP_SIZE;
+
+  timerBar.style.transition = "none";
+  timerBar.style.transform = "scaleX(1)";
+  // force reflow so the next transition applies cleanly
+  void timerBar.offsetWidth;
+  timerBar.style.transition = `transform ${cfg.time}s linear`;
+  requestAnimationFrame(() => { timerBar.style.transform = "scaleX(0)"; });
+
+  const areaW = playArea.clientWidth;
+  const areaH = playArea.clientHeight;
+  const placed = [];
+  const w = state.stampW, h = state.stampH;
+  const spacing = Math.max(w, h) * 0.85;
+
+  all.forEach((entry) => {
+    const el = document.createElement("div");
+    el.className = "stamp" + (isReverse ? " text-mode" : "");
+    el.textContent = isReverse ? `${entry[1]} ${entry[2]}` : entry[0];
+
+    let x, y, tries = 0;
+    do {
+      x = rand(4, Math.max(4, areaW - w - 4));
+      y = rand(4, Math.max(4, areaH - h - 4));
+      tries++;
+    } while (tries < 30 && placed.some(p => Math.hypot(p.x - x, p.y - y) < spacing));
+    placed.push({ x, y });
+
+    el.style.left = x + "px";
+    el.style.top = y + "px";
+    el.style.transform = `rotate(${rand(isReverse ? -4 : -10, isReverse ? 4 : 10)}deg)`;
+    playArea.appendChild(el);
+
+    const angle = rand(0, Math.PI * 2);
+    const speed = rand(cfg.speed[0], cfg.speed[1]);
+    const stamp = {
+      el, hanja: entry[0], x, y,
+      vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+    };
+    el.addEventListener("click", (ev) => onStampClick(stamp, ev));
+    state.stamps.push(stamp);
+  });
+}
+
+/* ============ 클릭 처리 ============ */
+function onStampClick(stamp, ev) {
+  if (!state.running || state.paused) return;
+  if (!state.stamps.includes(stamp)) return;
+
+  if (stamp.hanja === state.answer[0]) {
+    handleCorrect(stamp, ev);
+  } else {
+    handleWrong(stamp, ev);
+  }
+}
+
+function handleCorrect(stamp, ev) {
+  state.combo++;
+  state.maxCombo = Math.max(state.maxCombo, state.combo);
+  state.score += 10 + state.combo * 2;
+  state.correctStreak++;
+
+  if (state.correctStreak % 8 === 0 && state.level < 12) {
+    state.level++;
+  }
+
+  stamp.el.classList.add("correct-pop");
+  spawnInkSplat(stamp.el, "#c9a227");
+  spawnImprint(stamp.el);
+  removeStamp(stamp);
+  updateHUD();
+
+  setTimeout(() => {
+    if (state.running && !state.paused) nextQuestion();
+  }, 260);
+}
+
+function handleWrong(stamp, ev) {
+  state.combo = 0;
+  state.hearts--;
+  updateHUD();
+  stamp.el.classList.add("wrong-crack");
+  spawnInkSplat(stamp.el, "#7d201c");
+  flashScreen();
+  removeStamp(stamp);
+
+  if (state.hearts <= 0) {
+    endGame();
+  }
+}
+
+function removeStamp(stamp) {
+  const idx = state.stamps.indexOf(stamp);
+  if (idx >= 0) state.stamps.splice(idx, 1);
+  setTimeout(() => stamp.el.remove(), 450);
+}
+
+function flashScreen() {
+  playArea.classList.remove("flash-red");
+  void playArea.offsetWidth;
+  playArea.classList.add("flash-red");
+}
+
+function spawnInkSplat(anchorEl, color) {
+  const rect = anchorEl.getBoundingClientRect();
+  const parentRect = playArea.getBoundingClientRect();
+  const cx = rect.left - parentRect.left + rect.width / 2;
+  const cy = rect.top - parentRect.top + rect.height / 2;
+  for (let i = 0; i < 8; i++) {
+    const d = document.createElement("div");
+    d.className = "ink-splat";
+    d.style.left = cx + "px";
+    d.style.top = cy + "px";
+    d.style.background = color;
+    const angle = rand(0, Math.PI * 2);
+    const dist = rand(20, 60);
+    d.style.setProperty("--dx", Math.cos(angle) * dist + "px");
+    d.style.setProperty("--dy", Math.sin(angle) * dist + "px");
+    playArea.appendChild(d);
+    setTimeout(() => d.remove(), 600);
+  }
+}
+
+function spawnImprint(anchorEl) {
+  const rect = anchorEl.getBoundingClientRect();
+  const parentRect = playArea.getBoundingClientRect();
+  const d = document.createElement("div");
+  d.className = "imprint";
+  d.style.left = (rect.left - parentRect.left) + "px";
+  d.style.top = (rect.top - parentRect.top) + "px";
+  playArea.appendChild(d);
+  setTimeout(() => d.remove(), 1050);
+}
+
+/* ============ 타이머 초과 처리 ============ */
+function handleTimeout() {
+  state.combo = 0;
+  state.hearts--;
+  updateHUD();
+  flashScreen();
+  if (state.hearts <= 0) {
+    endGame();
+  } else {
+    nextQuestion();
+  }
+}
+
+/* ============ 메인 루프 ============ */
+function tick(ts) {
+  if (!state.running) return;
+  state.rafId = requestAnimationFrame(tick);
+  if (state.paused) { state.lastTs = null; return; }
+
+  if (state.lastTs === null) state.lastTs = ts;
+  const dt = Math.min(0.05, (ts - state.lastTs) / 1000);
+  state.lastTs = ts;
+
+  const areaH = playArea.clientHeight;
+  const areaW = playArea.clientWidth;
+  const maxX = Math.max(0, areaW - state.stampW);
+  const maxY = Math.max(0, areaH - state.stampH);
+
+  state.stamps.forEach(s => {
+    s.x += s.vx * dt;
+    s.y += s.vy * dt;
+    if (s.x < 0) { s.x = 0; s.vx = Math.abs(s.vx); }
+    if (s.x > maxX) { s.x = maxX; s.vx = -Math.abs(s.vx); }
+    if (s.y < 0) { s.y = 0; s.vy = Math.abs(s.vy); }
+    if (s.y > maxY) { s.y = maxY; s.vy = -Math.abs(s.vy); }
+    s.el.style.left = s.x + "px";
+    s.el.style.top = s.y + "px";
+  });
+
+  state.qElapsed += dt;
+  if (state.qElapsed >= state.qTotalTime) {
+    state.qElapsed = -9999; // guard against double-trigger
+    handleTimeout();
+  }
+}
+
+/* ============ 게임 종료 ============ */
+function endGame() {
+  state.running = false;
+  if (state.rafId) cancelAnimationFrame(state.rafId);
+  gameScreen.classList.add("hidden");
+  gameoverScreen.classList.remove("hidden");
+  $("final-score").textContent = state.score;
+  $("final-combo").textContent = state.maxCombo;
+  $("final-level").textContent = state.level === 12 ? "⚡ 번개" : state.level;
+}
+</script>
+</body>
+</html>
