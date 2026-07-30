@@ -66,6 +66,28 @@
   /* pause overlays the live (frozen) game screen underneath, so it needs its own opaque backdrop */
   #pause-screen { background: var(--canvas); z-index: 10; }
 
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    z-index: 50;
+  }
+  .modal-card {
+    background: var(--block-lime);
+    border-radius: 24px;
+    padding: 28px 24px;
+    max-width: 340px;
+    text-align: center;
+  }
+  .modal-card p {
+    margin: 0 0 20px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--ink);
+    white-space: pre-line;
+  }
+
   h1.title {
     font-size: clamp(28px, 6vw, 44px);
     font-weight: 700;
@@ -348,6 +370,7 @@
   <div id="start-screen" class="screen" style="justify-content:flex-start; overflow-y:auto; -webkit-overflow-scrolling:touch;">
     <h1 class="title">한자 도장 콕!</h1>
     <p class="subtitle" id="subtitle">8급~4급 한자 · 위에 뜻과 음이 뜨면,<br>맞는 한자 도장을 찾아 콕 찍어보세요.</p>
+    <button class="mode-btn hidden" id="install-btn" style="margin-bottom:18px;">📲 홈 화면에 추가</button>
     <div class="rules">
       ✅ 정답을 맞추면 점수 획득! 연속으로 맞추면 콤보 보너스!<br>
       ⏰ 문제마다 제한시간이 있어요 (막대가 줄어요)<br>
@@ -409,6 +432,14 @@
     <div class="stat">복습한 문제 <b id="review-done-count">0</b>개</div>
     <button class="big-btn" id="review-again-btn" style="margin-top:20px;">다시 복습하기</button>
     <button class="mode-btn" id="review-home-btn" style="margin-top:12px; padding:11px 28px; font-size:16px;">처음으로</button>
+  </div>
+
+  <!-- INSTALL HELP MODAL -->
+  <div id="install-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <p id="install-modal-text"></p>
+      <button class="big-btn" id="install-modal-close" style="padding:10px 28px; font-size:15px;">확인</button>
+    </div>
   </div>
 </div>
 
@@ -776,6 +807,50 @@ function exitGame() {
   gameScreen.classList.add("hidden");
   startScreen.classList.remove("hidden");
 }
+
+/* ============ 홈 화면에 추가 ============ */
+const isStandaloneApp = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const isMobileUA = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+const isKakaoInApp = /KAKAOTALK/i.test(navigator.userAgent);
+
+const installBtn = $("install-btn");
+const installModal = $("install-modal");
+const installModalText = $("install-modal-text");
+let deferredInstallPrompt = null;
+
+if (!isStandaloneApp && isMobileUA) {
+  installBtn.classList.remove("hidden");
+}
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  if (!isStandaloneApp) installBtn.classList.remove("hidden");
+});
+
+installBtn.addEventListener("click", async () => {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    return;
+  }
+  let msg;
+  if (isKakaoInApp) {
+    msg = "카톡 안에서는 설치할 수 없어요.\n\n오른쪽 위(또는 아래) 점 3개(⋮) 더보기 →\n'다른 브라우저로 열기'를 먼저 눌러주세요.\n\n그다음 열린 브라우저에서 이 버튼을 다시 눌러주세요.";
+  } else if (isIOS) {
+    msg = "하단 공유 버튼(⬆️)을 누른 뒤\n'홈 화면에 추가'를 선택해주세요.";
+  } else {
+    msg = "브라우저 메뉴(⋮)에서\n'홈 화면에 추가' 또는 '앱 설치'를 선택해주세요.";
+  }
+  installModalText.textContent = msg;
+  installModal.classList.remove("hidden");
+});
+
+$("install-modal-close").addEventListener("click", () => {
+  installModal.classList.add("hidden");
+});
 
 /* ============ 유틸 ============ */
 function rand(min, max) { return Math.random() * (max - min) + min; }
