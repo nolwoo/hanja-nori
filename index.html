@@ -380,6 +380,17 @@
     <div class="stat">최고 콤보 <b id="final-combo">0</b></div>
     <div class="stat">도달 단계 <b id="final-level">1</b></div>
     <button class="big-btn" id="restart-btn" style="margin-top:20px;">다시하기</button>
+    <button class="mode-btn hidden" id="review-btn" style="margin-top:12px; padding:11px 28px; font-size:16px;">
+      틀린 문제 복습하기 (<span id="missed-count">0</span>개)
+    </button>
+  </div>
+
+  <!-- REVIEW DONE SCREEN -->
+  <div id="review-done-screen" class="screen hidden">
+    <h1 class="title">복습 완료! 🎉</h1>
+    <div class="stat">복습한 문제 <b id="review-done-count">0</b>개</div>
+    <button class="big-btn" id="review-again-btn" style="margin-top:20px;">다시 복습하기</button>
+    <button class="mode-btn" id="review-home-btn" style="margin-top:12px; padding:11px 28px; font-size:16px;">처음으로</button>
   </div>
 </div>
 
@@ -651,6 +662,10 @@ let state = {
   qElapsed: 0,
   rafId: null,
   lastTs: null,
+  missed: [],
+  reviewMode: false,
+  reviewQueue: [],
+  reviewTotal: 0,
 };
 
 /* ============ DOM refs ============ */
@@ -659,6 +674,7 @@ const startScreen = $("start-screen");
 const gameScreen = $("game-screen");
 const pauseScreen = $("pause-screen");
 const gameoverScreen = $("gameover-screen");
+const reviewDoneScreen = $("review-done-screen");
 const modeGrid = $("mode-grid");
 const subtitleEl = $("subtitle");
 const gradeGrid = $("grade-grid");
@@ -666,6 +682,7 @@ const levelGrid = $("level-grid");
 const playArea = $("play-area");
 const clueEl = $("clue");
 const timerBar = $("timer-bar");
+const timerTrack = $("timer-track");
 const scoreEl = $("score");
 const comboEl = $("combo");
 const heartsEl = $("hearts");
@@ -717,6 +734,12 @@ $("restart-btn").addEventListener("click", () => {
   gameoverScreen.classList.add("hidden");
   startScreen.classList.remove("hidden");
 });
+$("review-btn").addEventListener("click", startReview);
+$("review-again-btn").addEventListener("click", startReview);
+$("review-home-btn").addEventListener("click", () => {
+  reviewDoneScreen.classList.add("hidden");
+  startScreen.classList.remove("hidden");
+});
 $("pause-btn").addEventListener("click", togglePause);
 $("resume-btn").addEventListener("click", togglePause);
 
@@ -730,17 +753,24 @@ function togglePause() {
 function rand(min, max) { return Math.random() * (max - min) + min; }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-function pickQuestion() {
-  const answer = pick(state.pool);
-  const cfg = LEVELS[state.level];
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// Picks `count` distractors from `pool`, excluding `answer`'s hanja AND any entry that
+// shares `answer`'s 뜻/음 text (e.g. 現/顯 both read "나타날 현") to avoid ambiguous choices.
+function buildDistractors(pool, answer, count) {
   const answerText = answer[1] + " " + answer[2];
-  // exclude same hanja AND synonym characters sharing the same 뜻/음 text (e.g. 現/顯 both "나타날 현")
-  const rest = state.pool.filter(h => h[0] !== answer[0] && (h[1] + " " + h[2]) !== answerText);
+  const rest = pool.filter(h => h[0] !== answer[0] && (h[1] + " " + h[2]) !== answerText);
   const distractors = [];
   const usedIdx = new Set();
   const usedTexts = new Set([answerText]);
   let attempts = 0;
-  while (distractors.length < cfg.choices - 1 && distractors.length < rest.length && attempts < rest.length * 5) {
+  while (distractors.length < count && distractors.length < rest.length && attempts < rest.length * 5) {
     attempts++;
     const idx = Math.floor(Math.random() * rest.length);
     if (usedIdx.has(idx)) continue;
@@ -751,11 +781,25 @@ function pickQuestion() {
     usedTexts.add(text);
     distractors.push(candidate);
   }
-  const all = [answer, ...distractors];
-  for (let i = all.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [all[i], all[j]] = [all[j], all[i]];
-  }
+  return distractors;
+}
+
+function pickQuestion() {
+  const answer = pick(state.pool);
+  const cfg = LEVELS[state.level];
+  const distractors = buildDistractors(state.pool, answer, cfg.choices - 1);
+  const all = shuffle([answer, ...distractors]);
+  return { answer, all, cfg };
+}
+
+// Review mode: work through state.reviewQueue (the missed hanja from the last game)
+// one at a time, sourcing distractors from the broader grade pool. Relaxed — no timer, no hearts.
+function pickReviewQuestion() {
+  const answer = state.reviewQueue.shift();
+  const choices = 4;
+  const distractors = buildDistractors(state.pool, answer, choices - 1);
+  const all = shuffle([answer, ...distractors]);
+  const cfg = { choices: all.length, time: 0, speed: [12, 18] };
   return { answer, all, cfg };
 }
 
@@ -770,6 +814,8 @@ function startGame() {
   state.maxCombo = 0;
   state.hearts = 3;
   state.correctStreak = 0;
+  state.missed = [];
+  state.reviewMode = false;
 
   startScreen.classList.add("hidden");
   gameoverScreen.classList.add("hidden");
@@ -783,7 +829,44 @@ function startGame() {
   state.rafId = requestAnimationFrame(tick);
 }
 
+/* ============ 틀린 문제 복습 ============ */
+function startReview() {
+  state.reviewMode = true;
+  state.reviewQueue = shuffle(state.missed.slice());
+  state.reviewTotal = state.reviewQueue.length;
+  state.combo = 0;
+  state.maxCombo = 0;
+  state.correctStreak = 0;
+
+  gameoverScreen.classList.add("hidden");
+  reviewDoneScreen.classList.add("hidden");
+  gameScreen.classList.remove("hidden");
+  state.running = true;
+
+  updateHUD();
+  nextQuestion();
+  if (state.rafId) cancelAnimationFrame(state.rafId);
+  state.lastTs = null;
+  state.rafId = requestAnimationFrame(tick);
+}
+
+function endReview() {
+  state.running = false;
+  if (state.rafId) cancelAnimationFrame(state.rafId);
+  gameScreen.classList.add("hidden");
+  reviewDoneScreen.classList.remove("hidden");
+  $("review-done-count").textContent = state.reviewTotal;
+}
+
 function updateHUD() {
+  if (state.reviewMode) {
+    const current = state.reviewTotal - state.reviewQueue.length;
+    heartsEl.innerHTML = '<span style="font-size:14px;font-weight:600;">🔁 복습 모드</span>';
+    scoreEl.textContent = `${current} / ${state.reviewTotal}`;
+    comboEl.textContent = "";
+    levelIndicator.textContent = "";
+    return;
+  }
   scoreEl.textContent = state.score;
   comboEl.textContent = state.combo >= 2 ? `🔥 ${state.combo} 콤보` : "";
   const levelLabel = state.level === 12 ? "⚡ 번개" : state.level;
@@ -799,10 +882,15 @@ function updateHUD() {
 
 /* ============ 문제 출제 ============ */
 function nextQuestion() {
+  if (state.reviewMode && state.reviewQueue.length === 0) {
+    endReview();
+    return;
+  }
+
   playArea.innerHTML = "";
   state.stamps = [];
 
-  const { answer, all, cfg } = pickQuestion();
+  const { answer, all, cfg } = state.reviewMode ? pickReviewQuestion() : pickQuestion();
   state.answer = answer;
   state.qTotalTime = cfg.time;
   state.qElapsed = 0;
@@ -818,12 +906,17 @@ function nextQuestion() {
   state.stampW = isReverse ? TEXT_STAMP_W : STAMP_SIZE;
   state.stampH = isReverse ? TEXT_STAMP_H : STAMP_SIZE;
 
-  timerBar.style.transition = "none";
-  timerBar.style.transform = "scaleX(1)";
-  // force reflow so the next transition applies cleanly
-  void timerBar.offsetWidth;
-  timerBar.style.transition = `transform ${cfg.time}s linear`;
-  requestAnimationFrame(() => { timerBar.style.transform = "scaleX(0)"; });
+  timerTrack.style.display = state.reviewMode ? "none" : "";
+  if (!state.reviewMode) {
+    timerBar.style.transition = "none";
+    timerBar.style.transform = "scaleX(1)";
+    // force reflow so the next transition applies cleanly
+    void timerBar.offsetWidth;
+    timerBar.style.transition = `transform ${cfg.time}s linear`;
+    requestAnimationFrame(() => { timerBar.style.transform = "scaleX(0)"; });
+  }
+
+  updateHUD();
 
   const areaW = playArea.clientWidth;
   const areaH = playArea.clientHeight;
@@ -899,16 +992,24 @@ function handleCorrect(stamp, ev) {
   }, 260);
 }
 
+function trackMissed(entry) {
+  if (state.missed.some(e => e[0] === entry[0])) return;
+  state.missed.push(entry);
+}
+
 function handleWrong(stamp, ev) {
   state.combo = 0;
-  state.hearts--;
+  if (!state.reviewMode) {
+    state.hearts--;
+    trackMissed(state.answer);
+  }
   updateHUD();
   stamp.el.classList.add("wrong-crack");
   spawnInkSplat(stamp.el, "#000000");
   flashScreen();
   removeStamp(stamp);
 
-  if (state.hearts <= 0) {
+  if (!state.reviewMode && state.hearts <= 0) {
     endGame();
   }
 }
@@ -949,6 +1050,7 @@ function spawnInkSplat(anchorEl, color) {
 function handleTimeout() {
   state.combo = 0;
   state.hearts--;
+  trackMissed(state.answer);
   updateHUD();
   flashScreen();
   if (state.hearts <= 0) {
@@ -984,10 +1086,12 @@ function tick(ts) {
     s.el.style.top = s.y + "px";
   });
 
-  state.qElapsed += dt;
-  if (state.qElapsed >= state.qTotalTime) {
-    state.qElapsed = -9999; // guard against double-trigger
-    handleTimeout();
+  if (!state.reviewMode) {
+    state.qElapsed += dt;
+    if (state.qElapsed >= state.qTotalTime) {
+      state.qElapsed = -9999; // guard against double-trigger
+      handleTimeout();
+    }
   }
 }
 
@@ -1000,6 +1104,14 @@ function endGame() {
   $("final-score").textContent = state.score;
   $("final-combo").textContent = state.maxCombo;
   $("final-level").textContent = state.level === 12 ? "⚡ 번개" : state.level;
+
+  const reviewBtn = $("review-btn");
+  if (state.missed.length > 0) {
+    $("missed-count").textContent = state.missed.length;
+    reviewBtn.classList.remove("hidden");
+  } else {
+    reviewBtn.classList.add("hidden");
+  }
 }
 </script>
 </body>
