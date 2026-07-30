@@ -424,6 +424,7 @@
     <button class="mode-btn hidden" id="review-btn" style="margin-top:12px; padding:11px 28px; font-size:16px;">
       틀린 문제 복습하기 (<span id="missed-count">0</span>개)
     </button>
+    <button class="mode-btn" id="share-result-btn" style="margin-top:12px; padding:11px 28px; font-size:16px;">📸 결과 저장/공유</button>
   </div>
 
   <!-- REVIEW DONE SCREEN -->
@@ -1216,6 +1217,107 @@ function endGame() {
     reviewBtn.classList.add("hidden");
   }
 }
+
+/* ============ 결과 저장 / 공유 ============ */
+async function buildResultImage() {
+  if (document.fonts && document.fonts.ready) {
+    try { await document.fonts.ready; } catch (e) {}
+  }
+
+  const W = 800, H = 1000;
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d");
+  const sans = (weight, size) => `${weight} ${size}px Pretendard, -apple-system, sans-serif`;
+
+  // background
+  ctx.fillStyle = "#f3c9b6"; // block-coral
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = "#000000";
+  ctx.textAlign = "center";
+
+  ctx.font = sans(700, 40);
+  ctx.fillText("한자 도장 콕!", W / 2, 130);
+
+  ctx.font = sans(400, 24);
+  const levelLabel = state.level === 12 ? "⚡ 번개" : `단계 ${state.level}`;
+  ctx.fillText(`${state.grade}급 · ${levelLabel} · ${MODES[state.mode].label}`, W / 2, 175);
+
+  // score block (white rounded card)
+  const cardX = 80, cardY = 240, cardW = W - 160, cardH = 430, radius = 32;
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.moveTo(cardX + radius, cardY);
+  ctx.arcTo(cardX + cardW, cardY, cardX + cardW, cardY + cardH, radius);
+  ctx.arcTo(cardX + cardW, cardY + cardH, cardX, cardY + cardH, radius);
+  ctx.arcTo(cardX, cardY + cardH, cardX, cardY, radius);
+  ctx.arcTo(cardX, cardY, cardX + cardW, cardY, radius);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = "#000000";
+  ctx.font = sans(500, 26);
+  ctx.fillText("최종 점수", W / 2, cardY + 80);
+  ctx.font = sans(700, 110);
+  ctx.fillText(String(state.score), W / 2, cardY + 210);
+
+  ctx.font = sans(500, 26);
+  ctx.fillText(`최고 콤보 🔥 ${state.maxCombo}   ·   틀린 문제 ${state.missed.length}개`, W / 2, cardY + 280);
+
+  ctx.font = sans(400, 20);
+  ctx.fillStyle = "#525252";
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}.${today.getMonth() + 1}.${today.getDate()}`;
+  ctx.fillText(dateStr, W / 2, cardY + 340);
+
+  // footer invite
+  ctx.fillStyle = "#000000";
+  ctx.font = sans(600, 26);
+  ctx.fillText("나도 한자 도장 콕! 하러 가기 👉", W / 2, H - 110);
+  ctx.font = sans(500, 26);
+  ctx.fillText(location.host || "hanja-nori.vercel.app", W / 2, H - 65);
+
+  return new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+}
+
+$("share-result-btn").addEventListener("click", async () => {
+  const btn = $("share-result-btn");
+  const originalLabel = btn.textContent;
+  btn.textContent = "이미지 만드는 중...";
+  btn.disabled = true;
+
+  try {
+    const blob = await buildResultImage();
+    const fileName = "hanja-nori-result.png";
+    const file = new File([blob], fileName, { type: "image/png" });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: "한자 도장 콕! 결과",
+        text: `한자 도장 콕! 점수 ${state.score}점 찍었어요 🎉`,
+      });
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
+    }
+  } catch (err) {
+    if (err && err.name !== "AbortError") {
+      console.error(err);
+    }
+  } finally {
+    btn.textContent = originalLabel;
+    btn.disabled = false;
+  }
+});
 </script>
 </body>
 </html>
