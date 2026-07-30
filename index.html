@@ -428,6 +428,7 @@
       틀린 문제 복습하기 (<span id="missed-count">0</span>개)
     </button>
     <button class="mode-btn" id="share-result-btn" style="margin-top:12px; padding:11px 28px; font-size:16px;">📸 결과 저장/공유</button>
+    <button class="mode-btn" id="gameover-home-btn" style="margin-top:12px; padding:11px 28px; font-size:16px;">🏠 홈으로</button>
   </div>
 
   <!-- REVIEW DONE SCREEN -->
@@ -784,6 +785,11 @@ for (let i = 1; i <= 12; i++) {
 
 $("start-btn").addEventListener("click", startGame);
 $("restart-btn").addEventListener("click", () => {
+  gameoverScreen.classList.add("hidden");
+  startScreen.classList.remove("hidden");
+  refreshMistakeMenu();
+});
+$("gameover-home-btn").addEventListener("click", () => {
   gameoverScreen.classList.add("hidden");
   startScreen.classList.remove("hidden");
   refreshMistakeMenu();
