@@ -99,6 +99,8 @@
     display: flex;
     gap: 12px;
     margin-bottom: 22px;
+    flex-wrap: wrap;
+    justify-content: center;
   }
   .grade-btn {
     width: 68px; height: 44px;
@@ -319,8 +321,8 @@
   #gameover-screen .stat b { color: var(--red-dark); font-size: 20px; }
 
   footer.hint {
-    position: absolute; bottom: 10px; left: 0; right: 0;
     text-align: center; font-size: 11px; color: var(--ink-soft); opacity: 0.6;
+    margin-top: 18px;
   }
 </style>
 </head>
@@ -328,13 +330,13 @@
 <div id="app">
 
   <!-- START SCREEN -->
-  <div id="start-screen" class="screen">
+  <div id="start-screen" class="screen" style="justify-content:flex-start; overflow-y:auto; -webkit-overflow-scrolling:touch;">
     <h1 class="title">한자 도장 콕!</h1>
     <p class="subtitle" id="subtitle">8급~4급 한자 · 위에 뜻과 음이 뜨면,<br>맞는 한자 도장을 찾아 콕 찍어보세요.</p>
     <div class="rules">
       ✅ 맞는 도장을 찍으면 점수 획득! 연속으로 맞히면 콤보 보너스<br>
       ⏰ 문제마다 제한시간이 있어요 (막대가 줄어들어요)<br>
-      ❌ 틀린 도장을 찍거나 시간을 넘기면 하트가 줄어요 ❤️<br>
+      ❌ 틀린 도장을 찍거나 시간을 넘기면 하트가&nbsp;줄어요&nbsp;❤️<br>
       🔥 8문제마다 난이도가 한 단계씩 올라가요
     </div>
     <p class="section-label">모드 선택</p>
@@ -344,6 +346,7 @@
     <p class="section-label">시작 단계</p>
     <div class="level-grid" id="level-grid"></div>
     <button class="big-btn" id="start-btn">시작하기</button>
+    <footer class="hint">로컬 개인용 · 한국어문회 8급~4급 배정한자 1,000자 기준</footer>
   </div>
 
   <!-- GAME SCREEN -->
@@ -378,8 +381,6 @@
     <div class="stat">도달 단계 <b id="final-level">1</b></div>
     <button class="big-btn" id="restart-btn" style="margin-top:20px;">다시하기</button>
   </div>
-
-  <footer class="hint">로컬 개인용 · 한국어문회 8급~4급 배정한자 1,000자 기준</footer>
 </div>
 
 <script>
