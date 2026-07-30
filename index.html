@@ -4,25 +4,30 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>한자 도장 콕! — 8급~4급</title>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
 <style>
   :root {
-    --paper: #f2e8d0;
-    --paper-dark: #e8dbb8;
-    --ink: #2a2420;
-    --ink-soft: #55483c;
-    --red: #b6312b;
-    --red-dark: #7d201c;
-    --gold: #b0842c;
-    --heart-red: #d1453a;
+    --primary: #000000;
+    --on-primary: #ffffff;
+    --ink: #000000;
+    --canvas: #ffffff;
+    --surface-soft: #f7f7f5;
+    --hairline: #e6e6e6;
+    --hairline-soft: #f1f1f1;
+    --block-lime: #dceeb1;
+    --block-lilac: #c5b0f4;
+    --block-cream: #f4ecd6;
+    --block-pink: #efd4d4;
+    --block-mint: #c8e6cd;
+    --block-coral: #f3c9b6;
+    --block-navy: #1f1d3d;
+    --accent-magenta: #ff3d8b;
   }
   * { box-sizing: border-box; }
   html, body {
     margin: 0; padding: 0; height: 100%;
-    background: var(--paper);
-    background-image:
-      radial-gradient(ellipse at top left, rgba(255,255,255,0.25), transparent 60%),
-      radial-gradient(ellipse at bottom right, rgba(0,0,0,0.05), transparent 60%);
-    font-family: "Nanum Myeongjo", Batang, "Apple SD Gothic Neo", serif;
+    background: var(--canvas);
+    font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
     color: var(--ink);
     overflow: hidden;
     -webkit-user-select: none; user-select: none;
@@ -49,13 +54,14 @@
 
   h1.title {
     font-size: clamp(28px, 6vw, 44px);
+    font-weight: 700;
     margin: 0 0 6px;
-    letter-spacing: 2px;
-    color: var(--red-dark);
-    text-shadow: 1px 1px 0 rgba(0,0,0,0.08);
+    letter-spacing: -0.5px;
+    color: var(--ink);
   }
   .subtitle {
-    color: var(--ink-soft);
+    color: var(--ink);
+    font-weight: 400;
     margin: 0 0 28px;
     font-size: clamp(13px, 2.2vw, 16px);
     text-align: center;
@@ -64,9 +70,10 @@
 
   .section-label {
     font-size: 13px;
-    color: var(--ink-soft);
+    font-weight: 600;
+    color: var(--ink);
     margin: 0 0 10px;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
   }
 
   .mode-grid {
@@ -78,21 +85,20 @@
   }
   .mode-btn {
     padding: 11px 22px;
-    border-radius: 22px;
-    border: 2px solid var(--red);
-    background: var(--paper-dark);
-    color: var(--red-dark);
+    border-radius: 50px;
+    border: 1.5px solid var(--primary);
+    background: var(--canvas);
+    color: var(--ink);
     font-size: 15px;
-    font-weight: bold;
+    font-weight: 500;
     font-family: inherit;
     cursor: pointer;
     transition: transform .12s ease, background .12s ease, color .12s ease;
   }
-  .mode-btn:hover { transform: scale(1.05); }
+  .mode-btn:active { transform: scale(0.96); }
   .mode-btn.selected {
-    background: var(--red);
-    color: #fff5e6;
-    box-shadow: 0 0 0 3px rgba(182,49,43,0.25);
+    background: var(--primary);
+    color: var(--on-primary);
   }
 
   .grade-grid {
@@ -104,22 +110,21 @@
   }
   .grade-btn {
     width: 68px; height: 44px;
-    border-radius: 22px;
-    border: 2px solid var(--red);
-    background: var(--paper-dark);
-    color: var(--red-dark);
+    border-radius: 50px;
+    border: 1.5px solid var(--primary);
+    background: var(--canvas);
+    color: var(--ink);
     font-size: 16px;
-    font-weight: bold;
+    font-weight: 500;
     font-family: inherit;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: transform .12s ease, background .12s ease, color .12s ease;
   }
-  .grade-btn:hover { transform: scale(1.06); }
+  .grade-btn:active { transform: scale(0.96); }
   .grade-btn.selected {
-    background: var(--red);
-    color: #fff5e6;
-    box-shadow: 0 0 0 3px rgba(182,49,43,0.25);
+    background: var(--primary);
+    color: var(--on-primary);
   }
 
   .level-grid {
@@ -130,51 +135,61 @@
   }
   .level-btn {
     width: 62px; height: 62px;
-    border-radius: 50%;
-    border: 2px solid var(--red);
-    background: var(--paper-dark);
-    color: var(--red-dark);
+    border-radius: 9999px;
+    border: 1.5px solid var(--primary);
+    background: var(--canvas);
+    color: var(--ink);
     font-size: 20px;
-    font-weight: bold;
+    font-weight: 500;
     font-family: inherit;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: transform .12s ease, background .12s ease, color .12s ease;
   }
-  .level-btn:hover { transform: scale(1.08); }
+  .level-btn:active { transform: scale(0.96); }
   .level-btn.selected {
-    background: var(--red);
-    color: #fff5e6;
-    box-shadow: 0 0 0 3px rgba(182,49,43,0.25);
+    background: var(--primary);
+    color: var(--on-primary);
   }
   .level-btn.lightning { font-size: 22px; }
 
   .big-btn {
     font-family: inherit;
-    font-size: 20px;
+    font-size: 18px;
+    font-weight: 500;
     padding: 14px 44px;
-    border-radius: 40px;
+    border-radius: 50px;
     border: none;
-    background: var(--red);
-    color: #fff6e8;
+    background: var(--primary);
+    color: var(--on-primary);
     cursor: pointer;
-    box-shadow: 0 4px 0 var(--red-dark);
-    letter-spacing: 4px;
-    transition: transform .08s ease, box-shadow .08s ease;
+    letter-spacing: 0;
+    transition: transform .1s ease;
   }
-  .big-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--red-dark); }
+  .big-btn:active { transform: scale(0.96); }
 
   .rules {
     max-width: 480px;
     font-size: 13px;
-    color: var(--ink-soft);
+    font-weight: 400;
+    color: var(--ink);
     line-height: 1.8;
     margin: 0 0 22px;
     text-align: left;
-    background: rgba(255,255,255,0.35);
-    border: 1px solid rgba(0,0,0,0.08);
-    border-radius: 12px;
-    padding: 14px 18px;
+    background: var(--block-lime);
+    border-radius: 24px;
+    padding: 16px 20px;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 480px) {
+    .screen { padding: 16px; }
+    .rules {
+      font-size: clamp(10.5px, 3.1vw, 13px);
+      padding: 14px 12px;
+      white-space: normal;
+      border-radius: 20px;
+    }
   }
 
   /* ---------- HUD ---------- */
@@ -187,14 +202,15 @@
   #hearts span { font-size: 20px; margin-right: 2px; filter: grayscale(0); }
   #hearts span.lost { filter: grayscale(1) opacity(0.35); }
   #score-wrap { text-align: center; }
-  #score { font-size: 22px; font-weight: bold; color: var(--red-dark); }
-  #combo { font-size: 12px; color: var(--gold); height: 14px; }
-  #level-indicator { font-size: 13px; color: var(--ink-soft); }
+  #score { font-size: 22px; font-weight: 700; color: var(--ink); }
+  #combo { font-size: 12px; font-weight: 600; color: var(--accent-magenta); height: 14px; }
+  #level-indicator { font-size: 13px; font-weight: 400; color: var(--ink); }
   #pause-btn {
-    background: none; border: 1px solid var(--ink-soft); color: var(--ink-soft);
-    border-radius: 8px; padding: 4px 10px; font-size: 12px; cursor: pointer;
+    background: var(--canvas); border: 1.5px solid var(--primary); color: var(--ink);
+    border-radius: 9999px; padding: 5px 14px; font-size: 12px; font-weight: 500; cursor: pointer;
     font-family: inherit;
   }
+  #pause-btn:active { transform: scale(0.96); }
 
   /* ---------- Clue + timer ---------- */
   #clue-wrap {
@@ -204,11 +220,11 @@
   }
   #clue {
     font-size: clamp(26px, 6vw, 40px);
-    font-weight: bold;
-    letter-spacing: 3px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
     color: var(--ink);
   }
-  #clue .sound { color: var(--red-dark); }
+  #clue .sound { color: var(--ink); font-weight: 400; }
   #clue.hanja-clue {
     font-size: clamp(48px, 12vw, 72px);
     letter-spacing: 0;
@@ -216,13 +232,13 @@
   #timer-track {
     width: 70%; max-width: 420px; height: 8px;
     margin: 8px auto 0;
-    background: rgba(0,0,0,0.12);
+    background: var(--hairline);
     border-radius: 6px;
     overflow: hidden;
   }
   #timer-bar {
     height: 100%; width: 100%;
-    background: linear-gradient(90deg, var(--gold), var(--red));
+    background: var(--primary);
     border-radius: 6px;
     transform-origin: left;
   }
@@ -232,33 +248,30 @@
     position: relative;
     flex: 1;
     overflow: hidden;
-    background-image:
-      repeating-linear-gradient(0deg, rgba(0,0,0,0.015) 0 2px, transparent 2px 40px),
-      repeating-linear-gradient(90deg, rgba(0,0,0,0.015) 0 2px, transparent 2px 40px);
+    background: var(--canvas);
   }
 
   .stamp {
     position: absolute;
     width: 78px; height: 78px;
-    border-radius: 50%;
-    background:
-      radial-gradient(circle at 35% 30%, #c8433c, var(--red) 55%, var(--red-dark) 100%);
-    border: 3px solid var(--red-dark);
-    box-shadow: 0 3px 6px rgba(0,0,0,0.25), inset 0 0 8px rgba(0,0,0,0.25);
+    border-radius: 9999px;
+    background: var(--block-lime);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
     display: flex; align-items: center; justify-content: center;
-    color: #fbead6;
+    color: var(--ink);
     font-size: 34px;
-    font-weight: bold;
+    font-weight: 700;
     cursor: pointer;
     will-change: transform;
-    transition: filter .15s ease;
+    transition: transform .15s ease;
   }
-  .stamp:hover { filter: brightness(1.08); }
+  .stamp:active { transform: scale(0.96); }
   .stamp.text-mode {
     width: 148px; height: 68px;
-    border-radius: 16px;
-    font-size: 18px;
-    letter-spacing: 0.5px;
+    border-radius: 24px;
+    font-size: 17px;
+    font-weight: 500;
+    letter-spacing: 0;
     padding: 0 8px;
     text-align: center;
     line-height: 1.2;
@@ -273,8 +286,8 @@
   }
   @keyframes pop-stamp {
     0%   { transform: scale(1) rotate(0deg); }
-    35%  { transform: scale(1.35) rotate(-8deg); filter: brightness(1.3); }
-    100% { transform: scale(0.2) rotate(6deg); opacity: 0; }
+    35%  { transform: scale(1.3) rotate(-6deg); }
+    100% { transform: scale(0.2) rotate(4deg); opacity: 0; }
   }
   @keyframes crack-shake {
     0%   { transform: translate(0,0) rotate(0deg); filter: grayscale(0); }
@@ -288,7 +301,7 @@
     position: absolute;
     width: 6px; height: 6px;
     border-radius: 50%;
-    background: var(--red-dark);
+    background: var(--accent-magenta);
     pointer-events: none;
     animation: splat-fly .55s ease-out forwards;
   }
@@ -296,32 +309,19 @@
     to { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
   }
 
-  .imprint {
-    position: absolute;
-    width: 78px; height: 78px;
-    border-radius: 50%;
-    border: 3px solid var(--red-dark);
-    opacity: 0.35;
-    pointer-events: none;
-    animation: imprint-fade 1s ease-out forwards;
-  }
-  @keyframes imprint-fade {
-    to { opacity: 0; transform: scale(1.15); }
-  }
-
   .flash-red {
     animation: flash-red-kf .35s ease;
   }
   @keyframes flash-red-kf {
-    0% { background: rgba(182,49,43,0.35); }
+    0% { background: var(--block-pink); }
     100% { background: transparent; }
   }
 
-  #gameover-screen .stat { font-size: 16px; margin: 4px 0; color: var(--ink-soft); }
-  #gameover-screen .stat b { color: var(--red-dark); font-size: 20px; }
+  #gameover-screen .stat { font-size: 16px; font-weight: 400; margin: 4px 0; color: var(--ink); }
+  #gameover-screen .stat b { color: var(--ink); font-weight: 700; font-size: 20px; }
 
   footer.hint {
-    text-align: center; font-size: 11px; color: var(--ink-soft); opacity: 0.6;
+    text-align: center; font-size: 11px; font-weight: 400; color: var(--ink); opacity: 0.5;
     margin-top: 18px;
   }
 </style>
@@ -334,10 +334,10 @@
     <h1 class="title">한자 도장 콕!</h1>
     <p class="subtitle" id="subtitle">8급~4급 한자 · 위에 뜻과 음이 뜨면,<br>맞는 한자 도장을 찾아 콕 찍어보세요.</p>
     <div class="rules">
-      ✅ 맞는 도장을 찍으면 점수 획득! 연속으로 맞히면 콤보 보너스<br>
-      ⏰ 문제마다 제한시간이 있어요 (막대가 줄어들어요)<br>
-      ❌ 틀린 도장을 찍거나 시간을 넘기면 하트가&nbsp;줄어요&nbsp;❤️<br>
-      🔥 8문제마다 난이도가 한 단계씩 올라가요
+      ✅ 정답을 맞추면 점수 획득! 연속으로 맞추면 콤보 보너스!<br>
+      ⏰ 문제마다 제한시간이 있어요 (막대가 줄어요)<br>
+      ❌ 오답·시간초과 시 하트가&nbsp;줄어요&nbsp;❤️<br>
+      🔥 8문제마다 난이도가 올라가요
     </div>
     <p class="section-label">모드 선택</p>
     <div class="mode-grid" id="mode-grid"></div>
@@ -831,10 +831,17 @@ function nextQuestion() {
   const w = state.stampW, h = state.stampH;
   const spacing = Math.max(w, h) * 0.85;
 
-  all.forEach((entry) => {
+  const palette = [
+    "var(--block-lime)", "var(--block-lilac)", "var(--block-cream)",
+    "var(--block-pink)", "var(--block-mint)", "var(--block-coral)",
+  ];
+  const shuffledPalette = palette.slice().sort(() => Math.random() - 0.5);
+
+  all.forEach((entry, i) => {
     const el = document.createElement("div");
     el.className = "stamp" + (isReverse ? " text-mode" : "");
     el.textContent = isReverse ? `${entry[1]} ${entry[2]}` : entry[0];
+    el.style.background = shuffledPalette[i % shuffledPalette.length];
 
     let x, y, tries = 0;
     do {
@@ -883,8 +890,7 @@ function handleCorrect(stamp, ev) {
   }
 
   stamp.el.classList.add("correct-pop");
-  spawnInkSplat(stamp.el, "#c9a227");
-  spawnImprint(stamp.el);
+  spawnInkSplat(stamp.el, "#ff3d8b");
   removeStamp(stamp);
   updateHUD();
 
@@ -898,7 +904,7 @@ function handleWrong(stamp, ev) {
   state.hearts--;
   updateHUD();
   stamp.el.classList.add("wrong-crack");
-  spawnInkSplat(stamp.el, "#7d201c");
+  spawnInkSplat(stamp.el, "#000000");
   flashScreen();
   removeStamp(stamp);
 
@@ -937,17 +943,6 @@ function spawnInkSplat(anchorEl, color) {
     playArea.appendChild(d);
     setTimeout(() => d.remove(), 600);
   }
-}
-
-function spawnImprint(anchorEl) {
-  const rect = anchorEl.getBoundingClientRect();
-  const parentRect = playArea.getBoundingClientRect();
-  const d = document.createElement("div");
-  d.className = "imprint";
-  d.style.left = (rect.left - parentRect.left) + "px";
-  d.style.top = (rect.top - parentRect.top) + "px";
-  playArea.appendChild(d);
-  setTimeout(() => d.remove(), 1050);
 }
 
 /* ============ 타이머 초과 처리 ============ */
