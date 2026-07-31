@@ -356,11 +356,6 @@
 
   #gameover-screen .stat { font-size: 16px; font-weight: 400; margin: 4px 0; color: var(--ink); }
   #gameover-screen .stat b { color: var(--ink); font-weight: 700; font-size: 20px; }
-
-  footer.hint {
-    text-align: center; font-size: 11px; font-weight: 400; color: var(--ink); opacity: 0.5;
-    margin-top: 18px;
-  }
 </style>
 </head>
 <body>
@@ -369,14 +364,14 @@
   <!-- START SCREEN -->
   <div id="start-screen" class="screen" style="justify-content:flex-start; overflow-y:auto; -webkit-overflow-scrolling:touch;">
     <h1 class="title">한자 도장 콕!</h1>
-    <p class="subtitle" id="subtitle">8급~4급 한자 · 위에 뜻과 음이 뜨면,<br>맞는 한자 도장을 찾아 콕 찍어보세요.</p>
+    <p class="subtitle" id="subtitle">맞는 한자 도장을 찾아 콕 찍어보세요.</p>
     <button class="mode-btn hidden" id="install-btn" style="margin-bottom:18px;">📲 홈 화면에 추가</button>
     <button class="mode-btn hidden" id="mistake-review-btn" style="margin-bottom:18px; background:var(--block-lilac);">
       🔁 틀린 한자 복습 (<span id="mistake-count">0</span>개)
     </button>
     <div class="rules">
-      ✅ 정답을 맞추면 점수 획득! 연속으로 맞추면 콤보 보너스!<br>
-      ⏰ 문제마다 제한시간이 있어요 (막대가 줄어요)<br>
+      ⏰ 제한시간 안에 정답을 맞춰주세요<br>
+      🎯 연속으로 맞출수록 보너스가 커져요<br>
       ❌ 오답·시간초과 시 하트가&nbsp;줄어요&nbsp;❤️<br>
       🔥 8문제마다 난이도가 올라가요
     </div>
@@ -387,7 +382,6 @@
     <p class="section-label">시작 단계</p>
     <div class="level-grid" id="level-grid"></div>
     <button class="big-btn" id="start-btn">시작하기</button>
-    <footer class="hint">로컬 개인용 · 한국어문회 8급~4급 배정한자 1,000자 기준</footer>
   </div>
 
   <!-- GAME SCREEN -->
