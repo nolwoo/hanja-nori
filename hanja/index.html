@@ -288,27 +288,31 @@
     background: var(--canvas);
   }
 
-  #grade-up-toast {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 20;
-    background: var(--block-lilac);
+  /* Fixed to the viewport top, clear of #clue-wrap and #play-area, so it never
+     covers the clue or stamps no matter how long it stays up. */
+  .milestone-toast {
+    position: fixed;
+    top: 8px;
+    left: 50%;
+    z-index: 30;
     color: var(--ink);
     font-weight: 700;
-    font-size: 20px;
-    padding: 18px 32px;
+    font-size: 16px;
+    line-height: 1;
+    padding: 10px 24px;
     border-radius: 9999px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.15);
     pointer-events: none;
-    animation: grade-up-pop 1.8s ease forwards;
+    animation: milestone-toast-pop 2.6s ease forwards;
   }
+  #grade-up-toast { background: var(--block-lilac); }
+  #combo-toast { background: var(--block-coral); }
 
-  @keyframes grade-up-pop {
-    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
-    15% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
-    25% { transform: translate(-50%, -50%) scale(1); }
-    80% { opacity: 1; }
+  @keyframes milestone-toast-pop {
+    0% { opacity: 0; transform: translateX(-50%) scale(0.7); }
+    10% { opacity: 1; transform: translateX(-50%) scale(1.05); }
+    18% { transform: translateX(-50%) scale(1); }
+    85% { opacity: 1; }
     100% { opacity: 0; }
   }
 
@@ -377,28 +381,13 @@
     pointer-events: none;
     white-space: nowrap;
     transform: translate(-50%, -50%);
-    animation: score-popup-float .7s ease-out forwards;
+    animation: score-popup-float 1.6s ease-out forwards;
   }
   @keyframes score-popup-float {
     0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
-    20% { transform: translate(-50%, -60%) scale(1.15); opacity: 1; }
-    100% { transform: translate(-50%, -140%) scale(1); opacity: 0; }
-  }
-
-  #combo-toast {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 20;
-    background: var(--block-coral);
-    color: var(--ink);
-    font-weight: 700;
-    font-size: 20px;
-    padding: 18px 32px;
-    border-radius: 9999px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    pointer-events: none;
-    animation: grade-up-pop 1.8s ease forwards;
+    12% { transform: translate(-50%, -60%) scale(1.15); opacity: 1; }
+    70% { opacity: 1; }
+    100% { transform: translate(-50%, -180%) scale(1); opacity: 0; }
   }
 
   .flash-red {
@@ -458,8 +447,8 @@
       <div id="timer-track"><div id="timer-bar"></div></div>
     </div>
     <div id="play-area"></div>
-    <div id="grade-up-toast" class="hidden"></div>
-    <div id="combo-toast" class="hidden"></div>
+    <div id="grade-up-toast" class="milestone-toast hidden"></div>
+    <div id="combo-toast" class="milestone-toast hidden"></div>
   </div>
 
   <!-- PAUSE OVERLAY -->
@@ -1117,10 +1106,6 @@ function nextQuestion() {
   playArea.innerHTML = "";
   state.stamps = [];
 
-  // A still-visible combo/grade toast could otherwise sit over the new stamps or clue.
-  gradeUpToast.classList.add("hidden");
-  comboToast.classList.add("hidden");
-
   const { answer, all, cfg } = state.reviewMode ? pickReviewQuestion() : pickQuestion();
   state.answer = answer;
   state.qTotalTime = cfg.time;
@@ -1200,12 +1185,12 @@ function showGradeUpToast(grade) {
   gradeUpToast.style.animation = "none";
   void gradeUpToast.offsetWidth;
   gradeUpToast.style.animation = "";
-  setTimeout(() => gradeUpToast.classList.add("hidden"), 1800);
+  setTimeout(() => gradeUpToast.classList.add("hidden"), 2600);
 }
 
 /* ============ 콤보 연출 ============ */
 // Appended to <body> (not #play-area) with viewport coordinates, since nextQuestion()
-// clears #play-area ~260ms after a correct answer — well before this 700ms animation ends.
+// clears #play-area ~260ms after a correct answer — well before this animation ends.
 function spawnScorePopup(anchorEl, points, combo) {
   const rect = anchorEl.getBoundingClientRect();
   const cx = rect.left + rect.width / 2;
@@ -1223,7 +1208,7 @@ function spawnScorePopup(anchorEl, points, combo) {
   d.style.color = color;
   d.style.fontSize = fontSize + "px";
   document.body.appendChild(d);
-  setTimeout(() => d.remove(), 700);
+  setTimeout(() => d.remove(), 1600);
 }
 
 const comboToast = $("combo-toast");
@@ -1240,7 +1225,7 @@ function showComboToast(combo) {
   comboToast.style.animation = "none";
   void comboToast.offsetWidth;
   comboToast.style.animation = "";
-  setTimeout(() => comboToast.classList.add("hidden"), 1800);
+  setTimeout(() => comboToast.classList.add("hidden"), 2600);
 }
 
 /* ============ 클릭 처리 ============ */
