@@ -692,9 +692,16 @@ const MODES = {
 
 // HANJA is ordered cumulatively: 8급(0-49), 7급Ⅱ+7급(50-149), 6급Ⅱ+6급(150-299),
 // 5급Ⅱ+5급(300-499), 4급Ⅱ+4급(500-999).
-// Selecting a grade practices that grade plus everything below it, matching the real exam.
+// Selecting a grade only practices that grade's own new characters, not the easier
+// grades below it (those are assumed already known / handled by grade auto-promotion).
 const GRADE_BOUNDARIES = { "8": 50, "7": 150, "6": 300, "5": 500, "4": 1000 };
 const GRADE_ORDER = ["8", "7", "6", "5", "4"];
+
+function gradePool(grade) {
+  const idx = GRADE_ORDER.indexOf(grade);
+  const start = idx === 0 ? 0 : GRADE_BOUNDARIES[GRADE_ORDER[idx - 1]];
+  return HANJA.slice(start, GRADE_BOUNDARIES[grade]);
+}
 
 /* ============ 난이도 테이블 (1~12단계) ============ */
 const LEVELS = [
@@ -737,6 +744,7 @@ let state = {
   rafId: null,
   lastTs: null,
   missed: [],
+  askedSet: new Set(),
   reviewMode: false,
   reviewQueue: [],
   reviewTotal: 0,
@@ -924,8 +932,21 @@ function buildDistractors(pool, answer, count) {
   return distractors;
 }
 
+// Avoids repeating a hanja as the question within a session — once every hanja in the
+// current pool has come up, the seen-set resets so the pool can cycle again.
+function pickUnseen() {
+  let candidates = state.pool.filter(h => !state.askedSet.has(h[0]));
+  if (candidates.length === 0) {
+    state.askedSet.clear();
+    candidates = state.pool;
+  }
+  const answer = pick(candidates);
+  state.askedSet.add(answer[0]);
+  return answer;
+}
+
 function pickQuestion() {
-  const answer = pick(state.pool);
+  const answer = pickUnseen();
   const cfg = LEVELS[state.level];
   const distractors = buildDistractors(state.pool, answer, cfg.choices - 1);
   const all = shuffle([answer, ...distractors]);
@@ -947,7 +968,7 @@ function pickReviewQuestion() {
 function startGame() {
   state.mode = state.startMode;
   state.grade = state.startGrade;
-  state.pool = HANJA.slice(0, GRADE_BOUNDARIES[state.grade]);
+  state.pool = gradePool(state.grade);
   state.level = state.startLevel;
   state.score = 0;
   state.combo = 0;
@@ -955,6 +976,7 @@ function startGame() {
   state.hearts = 3;
   state.correctStreak = 0;
   state.missed = [];
+  state.askedSet = new Set();
   state.reviewMode = false;
 
   startScreen.classList.add("hidden");
@@ -1173,8 +1195,9 @@ function handleCorrect(stamp, ev) {
       const nextGrade = GRADE_ORDER[gradeIdx + 1];
       if (nextGrade) {
         state.grade = nextGrade;
-        state.pool = HANJA.slice(0, GRADE_BOUNDARIES[nextGrade]);
+        state.pool = gradePool(nextGrade);
         state.level = 1;
+        state.askedSet.clear();
         showGradeUpToast(nextGrade);
       }
     }
