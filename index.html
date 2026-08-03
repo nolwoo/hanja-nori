@@ -288,6 +288,30 @@
     background: var(--canvas);
   }
 
+  #grade-up-toast {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    background: var(--block-lilac);
+    color: var(--ink);
+    font-weight: 700;
+    font-size: 20px;
+    padding: 18px 32px;
+    border-radius: 9999px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    pointer-events: none;
+    animation: grade-up-pop 1.8s ease forwards;
+  }
+
+  @keyframes grade-up-pop {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+    15% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+    25% { transform: translate(-50%, -50%) scale(1); }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
   .stamp {
     position: absolute;
     width: 78px; height: 78px;
@@ -403,6 +427,7 @@
       <div id="timer-track"><div id="timer-bar"></div></div>
     </div>
     <div id="play-area"></div>
+    <div id="grade-up-toast" class="hidden"></div>
   </div>
 
   <!-- PAUSE OVERLAY -->
@@ -669,6 +694,7 @@ const MODES = {
 // 5급Ⅱ+5급(300-499), 4급Ⅱ+4급(500-999).
 // Selecting a grade practices that grade plus everything below it, matching the real exam.
 const GRADE_BOUNDARIES = { "8": 50, "7": 150, "6": 300, "5": 500, "4": 1000 };
+const GRADE_ORDER = ["8", "7", "6", "5", "4"];
 
 /* ============ 난이도 테이블 (1~12단계) ============ */
 const LEVELS = [
@@ -1107,6 +1133,18 @@ function nextQuestion() {
   });
 }
 
+/* ============ 급수 승급 ============ */
+const gradeUpToast = $("grade-up-toast");
+function showGradeUpToast(grade) {
+  gradeUpToast.textContent = `🎉 ${grade}급으로 승급!`;
+  gradeUpToast.classList.remove("hidden");
+  void gradeUpToast.offsetWidth;
+  gradeUpToast.style.animation = "none";
+  void gradeUpToast.offsetWidth;
+  gradeUpToast.style.animation = "";
+  setTimeout(() => gradeUpToast.classList.add("hidden"), 1800);
+}
+
 /* ============ 클릭 처리 ============ */
 function onStampClick(stamp, ev) {
   if (!state.running || state.paused) return;
@@ -1127,8 +1165,19 @@ function handleCorrect(stamp, ev) {
   state.score += 10 + state.combo * 2;
   state.correctStreak++;
 
-  if (state.correctStreak % 8 === 0 && state.level < 12) {
-    state.level++;
+  if (state.correctStreak % 8 === 0) {
+    if (state.level < 12) {
+      state.level++;
+    } else {
+      const gradeIdx = GRADE_ORDER.indexOf(state.grade);
+      const nextGrade = GRADE_ORDER[gradeIdx + 1];
+      if (nextGrade) {
+        state.grade = nextGrade;
+        state.pool = HANJA.slice(0, GRADE_BOUNDARIES[nextGrade]);
+        state.level = 1;
+        showGradeUpToast(nextGrade);
+      }
+    }
   }
 
   stamp.el.classList.add("correct-pop");
