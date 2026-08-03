@@ -1191,12 +1191,24 @@ function showGradeUpToast(grade) {
 /* ============ 콤보 연출 ============ */
 // Appended to <body> (not #play-area) with viewport coordinates, since nextQuestion()
 // clears #play-area ~260ms after a correct answer — well before this animation ends.
+// Beyond 30 the color cycles through this palette every 5 combo so long streaks
+// keep changing instead of freezing on one color forever.
+const LEGEND_COLORS = ["#ffb300", "#ff3d3d", "#a855f7", "#00b8a9", "#ff3d8b"];
+function comboColor(combo) {
+  if (combo >= 30) return LEGEND_COLORS[Math.floor((combo - 30) / 5) % LEGEND_COLORS.length];
+  if (combo >= 20) return "#ff3d3d";
+  if (combo >= 15) return "#a855f7";
+  if (combo >= 10) return "var(--accent-magenta)";
+  if (combo >= 5) return "#ff7a3d";
+  return "var(--ink)";
+}
+
 function spawnScorePopup(anchorEl, points, combo) {
   const rect = anchorEl.getBoundingClientRect();
   const cx = rect.left + rect.width / 2;
   const cy = rect.top + rect.height / 2;
 
-  const color = combo >= 10 ? "var(--accent-magenta)" : combo >= 5 ? "#ff7a3d" : "var(--ink)";
+  const color = comboColor(combo);
   const fontSize = Math.min(18 + combo * 1.5, 40);
 
   const d = document.createElement("div");
@@ -1212,7 +1224,21 @@ function spawnScorePopup(anchorEl, points, combo) {
 }
 
 const comboToast = $("combo-toast");
+// Beyond 30 the message cycles through this pool every 5 combo instead of
+// repeating "전설이에요" forever on very long streaks.
+const LEGEND_MESSAGES = [
+  (c) => `👑 ${c}콤보! 전설이에요`,
+  (c) => `🚀 ${c}콤보! 믿을 수 없어요`,
+  (c) => `🌈 ${c}콤보! 신급이에요`,
+  (c) => `🏆 ${c}콤보! 챔피언`,
+  (c) => `☄️ ${c}콤보! 우주 최강`,
+];
 function comboMilestoneMessage(combo) {
+  if (combo >= 30) {
+    const idx = Math.floor((combo - 30) / 5) % LEGEND_MESSAGES.length;
+    return LEGEND_MESSAGES[idx](combo);
+  }
+  if (combo >= 25) return `💫 ${combo}콤보! 굉장해요`;
   if (combo >= 20) return `💯 ${combo}콤보! 전설이에요`;
   if (combo >= 15) return `🌟 ${combo}콤보! 최고예요`;
   if (combo >= 10) return `⚡ ${combo}콤보! 대단해요`;
