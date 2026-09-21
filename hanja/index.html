@@ -228,6 +228,34 @@
     }
   }
 
+  /* Short viewports (landscape tablets/phones): the start screen's content can run
+     taller than the window. It still scrolls, but nothing on screen hints that —
+     so compact everything to fit without scrolling wherever possible. */
+  @media (max-height: 700px) {
+    .screen { padding: 14px; }
+    h1.title { margin-bottom: 2px; }
+    .subtitle { margin-bottom: 10px; }
+    .rules {
+      font-size: 12px;
+      line-height: 1.4;
+      padding: 10px 16px;
+      margin-bottom: 10px;
+      white-space: normal;
+    }
+    .section-label { margin-bottom: 4px; }
+    .mode-grid { margin-bottom: 10px; }
+    .grade-grid { margin-bottom: 10px; }
+    .grade-btn { width: 58px; height: 36px; font-size: 14px; }
+    .level-grid {
+      grid-template-columns: repeat(4, 48px);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .level-btn { width: 48px; height: 48px; font-size: 16px; }
+    .level-btn.lightning { font-size: 18px; }
+    .big-btn { padding: 10px 40px; font-size: 16px; }
+  }
+
   /* ---------- HUD ---------- */
   #hud {
     display: flex; align-items: center; justify-content: space-between;
