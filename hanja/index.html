@@ -344,6 +344,29 @@
     100% { opacity: 0; }
   }
 
+  #word-card {
+    position: fixed;
+    left: 50%; top: 52%;
+    transform: translate(-50%, -50%);
+    z-index: 25;
+    width: min(88vw, 360px);
+    max-height: 86vh;
+    overflow-y: auto;
+    background: var(--block-cream);
+    border-radius: 28px;
+    padding: 22px 22px 20px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+    text-align: center;
+  }
+  #word-card-head { font-size: 22px; font-weight: 700; margin-bottom: 14px; }
+  #word-card-head .hj { font-size: 40px; margin-right: 8px; }
+  #word-card-label { font-size: 13px; font-weight: 600; letter-spacing: 1px; margin-bottom: 8px; }
+  #word-card-list { list-style: none; margin: 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  #word-card-list li { background: var(--canvas); border-radius: 18px; padding: 10px 14px; font-size: 16px; }
+  #word-card-list .w { font-size: 26px; font-weight: 700; margin-right: 10px; letter-spacing: 2px; }
+  #word-card-list .w .hit { color: var(--accent-magenta); }
+  #word-card .big-btn { padding: 10px 40px; font-size: 16px; }
+
   .stamp {
     position: absolute;
     width: 78px; height: 78px;
@@ -475,6 +498,12 @@
       <div id="timer-track"><div id="timer-bar"></div></div>
     </div>
     <div id="play-area"></div>
+    <div id="word-card" class="hidden">
+      <div id="word-card-head"></div>
+      <div id="word-card-label">이 한자가 쓰이는 단어</div>
+      <ul id="word-card-list"></ul>
+      <button class="big-btn" id="word-card-next">다음</button>
+    </div>
     <div id="grade-up-toast" class="milestone-toast hidden"></div>
     <div id="combo-toast" class="milestone-toast hidden"></div>
   </div>
@@ -739,6 +768,60 @@ const MODES = {
   hanja2word: { label: "한자 → 뜻/음", subtitle: "위에 한자가 뜨면,<br>맞는 뜻과 음 도장을 찾아 콕 찍어보세요." },
 };
 
+// 복습 모드에서 정답 직후 보여주는 일상 단어 [한자어, 독음]. 표준국어대사전 대조로 검증함. 없는 한자는 카드를 생략.
+const WORDS = {
+  "校": [["學校","학교"],["登校","등교"]],
+  "敎": [["敎室","교실"],["敎育","교육"]],
+  "九": [["九月","구월"],["九九段","구구단"]],
+  "國": [["韓國","한국"],["外國","외국"]],
+  "軍": [["軍人","군인"],["空軍","공군"]],
+  "金": [["現金","현금"],["金曜日","금요일"]],
+  "南": [["南北","남북"],["南大門","남대문"]],
+  "女": [["女子","여자"],["少女","소녀"]],
+  "年": [["來年","내년"],["學年","학년"]],
+  "大": [["大學","대학"],["大門","대문"]],
+  "東": [["東洋","동양"],["東海","동해"]],
+  "六": [["六十","육십"],["六角形","육각형"]],
+  "萬": [["千萬","천만"],["萬一","만일"]],
+  "母": [["父母","부모"],["母國","모국"]],
+  "木": [["木曜日","목요일"],["木材","목재"]],
+  "門": [["正門","정문"],["大門","대문"]],
+  "民": [["國民","국민"],["市民","시민"]],
+  "白": [["白色","백색"],["白頭山","백두산"]],
+  "父": [["父母","부모"],["祖父","조부"]],
+  "北": [["北韓","북한"],["南北","남북"]],
+  "四": [["四季節","사계절"],["四角形","사각형"]],
+  "山": [["登山","등산"],["火山","화산"]],
+  "三": [["三月","삼월"],["三角形","삼각형"]],
+  "生": [["學生","학생"],["生日","생일"]],
+  "西": [["西洋","서양"],["東西","동서"]],
+  "先": [["先生","선생"],["先輩","선배"]],
+  "小": [["小說","소설"],["縮小","축소"]],
+  "水": [["水泳","수영"],["水道","수도"]],
+  "室": [["敎室","교실"],["室內","실내"]],
+  "十": [["十分","십분"],["十字架","십자가"]],
+  "五": [["五月","오월"],["五色","오색"]],
+  "王": [["王子","왕자"],["國王","국왕"]],
+  "外": [["外國","외국"],["野外","야외"]],
+  "月": [["月曜日","월요일"],["每月","매월"]],
+  "二": [["二月","이월"],["二十","이십"]],
+  "人": [["人間","인간"],["外國人","외국인"]],
+  "一": [["一月","일월"],["統一","통일"]],
+  "日": [["日曜日","일요일"],["生日","생일"]],
+  "長": [["校長","교장"],["成長","성장"]],
+  "弟": [["兄弟","형제"],["弟子","제자"]],
+  "中": [["中學校","중학교"],["集中","집중"]],
+  "靑": [["靑少年","청소년"],["靑色","청색"]],
+  "寸": [["三寸","삼촌"],["四寸","사촌"]],
+  "七": [["七月","칠월"],["七十","칠십"]],
+  "土": [["土曜日","토요일"],["土地","토지"]],
+  "八": [["八月","팔월"],["八角形","팔각형"]],
+  "學": [["學校","학교"],["學生","학생"]],
+  "韓": [["韓國","한국"],["韓服","한복"]],
+  "兄": [["兄弟","형제"],["學父兄","학부형"]],
+  "火": [["火曜日","화요일"],["火災","화재"]],
+};
+
 // HANJA is ordered cumulatively: 8급(0-49), 7급Ⅱ+7급(50-149), 6급Ⅱ+6급(150-299),
 // 5급Ⅱ+5급(300-499), 4급Ⅱ+4급(500-999).
 // Selecting a grade only practices that grade's own new characters, not the easier
@@ -893,6 +976,7 @@ function togglePause() {
 }
 
 function exitGame() {
+  hideWordCard();
   state.running = false;
   state.paused = false;
   if (state.rafId) cancelAnimationFrame(state.rafId);
@@ -1015,6 +1099,7 @@ function pickReviewQuestion() {
 
 /* ============ 게임 시작 ============ */
 function startGame() {
+  hideWordCard();
   state.mode = state.startMode;
   state.grade = state.startGrade;
   state.pool = gradePool(state.grade);
@@ -1095,6 +1180,7 @@ function startMistakeReview() {
 }
 
 function endReview() {
+  hideWordCard();
   state.running = false;
   if (state.rafId) cancelAnimationFrame(state.rafId);
   gameScreen.classList.add("hidden");
@@ -1294,6 +1380,39 @@ function onStampClick(stamp, ev) {
   }
 }
 
+/* ============ 복습 모드: 일상 단어 카드 ============ */
+const wordCard = $("word-card");
+function hideWordCard() {
+  wordCard.classList.add("hidden");
+  playArea.style.pointerEvents = "";
+}
+function showWordCard(entry) {
+  const [hanja, meaning, sound] = entry;
+  $("word-card-head").innerHTML = `<span class="hj">${hanja}</span>${meaning} ${sound}`;
+  const list = $("word-card-list");
+  list.innerHTML = "";
+  WORDS[hanja].forEach(([word, reading]) => {
+    const li = document.createElement("li");
+    const w = document.createElement("span");
+    w.className = "w";
+    [...word].forEach(ch => {
+      const sp = document.createElement("span");
+      sp.textContent = ch;
+      if (ch === hanja) sp.className = "hit";
+      w.appendChild(sp);
+    });
+    li.appendChild(w);
+    li.appendChild(document.createTextNode(reading));
+    list.appendChild(li);
+  });
+  playArea.style.pointerEvents = "none";
+  wordCard.classList.remove("hidden");
+}
+$("word-card-next").addEventListener("click", () => {
+  hideWordCard();
+  if (state.running && !state.paused) nextQuestion();
+});
+
 function handleCorrect(stamp, ev) {
   if (state.reviewMode) removeMistake(state.answer[0]);
 
@@ -1326,6 +1445,12 @@ function handleCorrect(stamp, ev) {
   spawnInkSplat(stamp.el, "#ff3d8b");
   removeStamp(stamp);
   updateHUD();
+
+  if (state.reviewMode && WORDS[state.answer[0]]) {
+    const entry = state.answer;
+    setTimeout(() => { if (state.running) showWordCard(entry); }, 260);
+    return;
+  }
 
   setTimeout(() => {
     if (state.running && !state.paused) nextQuestion();
