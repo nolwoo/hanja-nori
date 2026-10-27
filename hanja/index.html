@@ -973,6 +973,19 @@ function togglePause() {
   state.paused = !state.paused;
   pauseScreen.classList.toggle("hidden", !state.paused);
   if (!state.paused) state.lastTs = null;
+
+  // 바는 CSS 전환이라 일시정지해도 계속 줄어든다 — 멈춘 지점에 고정했다가 남은 시간만큼 다시 이어 준다.
+  if (state.reviewMode || state.qTotalTime <= 0) return;
+  const elapsed = Math.max(0, state.qElapsed);
+  const remaining = state.qTotalTime - elapsed;
+  timerBar.style.transition = "none";
+  if (state.paused) {
+    timerBar.style.transform = `scaleX(${Math.max(0, remaining / state.qTotalTime)})`;
+  } else if (remaining > 0) {
+    void timerBar.offsetWidth;
+    timerBar.style.transition = `transform ${remaining}s linear`;
+    timerBar.style.transform = "scaleX(0)";
+  }
 }
 
 function exitGame() {
@@ -1160,6 +1173,7 @@ function startMistakeReview() {
 
   state.reviewMode = true;
   state.reviewSource = "persistent";
+  state.mode = state.startMode;
   state.pool = HANJA;
   state.reviewQueue = shuffle(entries);
   state.reviewTotal = state.reviewQueue.length;
@@ -1425,7 +1439,7 @@ function handleCorrect(stamp, ev) {
   spawnScorePopup(stamp.el, points, state.combo);
   if (state.combo % 5 === 0) showComboToast(state.combo);
 
-  if (state.correctStreak % 8 === 0) {
+  if (!state.reviewMode && state.correctStreak % 8 === 0) {
     if (state.level < 12) {
       state.level++;
     } else {
@@ -1464,10 +1478,14 @@ function loadMistakes() {
   try { return JSON.parse(localStorage.getItem(MISTAKE_KEY) || "{}"); } catch { return {}; }
 }
 
+function saveMistakes(store) {
+  try { localStorage.setItem(MISTAKE_KEY, JSON.stringify(store)); } catch {}
+}
+
 function addMistake(entry) {
   const store = loadMistakes();
   store[entry[0]] = entry;
-  localStorage.setItem(MISTAKE_KEY, JSON.stringify(store));
+  saveMistakes(store);
   refreshMistakeMenu();
 }
 
@@ -1475,7 +1493,7 @@ function removeMistake(hanja) {
   const store = loadMistakes();
   if (!(hanja in store)) return;
   delete store[hanja];
-  localStorage.setItem(MISTAKE_KEY, JSON.stringify(store));
+  saveMistakes(store);
   refreshMistakeMenu();
 }
 
