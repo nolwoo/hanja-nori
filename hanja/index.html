@@ -870,6 +870,7 @@ let state = {
   stampW: STAMP_SIZE,
   stampH: STAMP_SIZE,
   paused: false,
+  awaitingNext: false, // 정답 처리 후 다음 문제가 뜨기 전(260ms) — 이 사이엔 타이머·클릭을 멈춘다
   running: false,
   qTotalTime: 0,
   qElapsed: 0,
@@ -973,6 +974,9 @@ function togglePause() {
   state.paused = !state.paused;
   pauseScreen.classList.toggle("hidden", !state.paused);
   if (!state.paused) state.lastTs = null;
+
+  // 정답 직후(다음 문제 대기 중)에 일시정지했다가 재개하면, 미뤄진 다음 문제를 지금 띄운다.
+  if (!state.paused && state.awaitingNext && state.running) { nextQuestion(); return; }
 
   // 바는 CSS 전환이라 일시정지해도 계속 줄어든다 — 멈춘 지점에 고정했다가 남은 시간만큼 다시 이어 준다.
   if (state.reviewMode || state.qTotalTime <= 0) return;
@@ -1226,6 +1230,7 @@ function updateHUD() {
 
 /* ============ 문제 출제 ============ */
 function nextQuestion() {
+  state.awaitingNext = false;
   if (state.reviewMode && state.reviewQueue.length === 0) {
     endReview();
     return;
@@ -1384,7 +1389,7 @@ function showComboToast(combo) {
 
 /* ============ 클릭 처리 ============ */
 function onStampClick(stamp, ev) {
-  if (!state.running || state.paused) return;
+  if (!state.running || state.paused || state.awaitingNext) return;
   if (!state.stamps.includes(stamp)) return;
 
   if (stamp.hanja === state.answer[0]) {
@@ -1466,6 +1471,7 @@ function handleCorrect(stamp, ev) {
     return;
   }
 
+  state.awaitingNext = true;
   setTimeout(() => {
     if (state.running && !state.paused) nextQuestion();
   }, 260);
@@ -1475,7 +1481,10 @@ function handleCorrect(stamp, ev) {
 const MISTAKE_KEY = "hanjaMistakes";
 
 function loadMistakes() {
-  try { return JSON.parse(localStorage.getItem(MISTAKE_KEY) || "{}"); } catch { return {}; }
+  try {
+    const v = JSON.parse(localStorage.getItem(MISTAKE_KEY) || "{}");
+    return v && typeof v === "object" && !Array.isArray(v) ? v : {};
+  } catch { return {}; }
 }
 
 function saveMistakes(store) {
@@ -1625,7 +1634,7 @@ function tick(ts) {
     s.el.style.top = s.y + "px";
   });
 
-  if (!state.reviewMode) {
+  if (!state.reviewMode && !state.awaitingNext) {
     state.qElapsed += dt;
     if (state.qElapsed >= state.qTotalTime) {
       state.qElapsed = -9999; // guard against double-trigger
